@@ -1,12 +1,9 @@
 package parsers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.Projection;
-import org.openrdf.query.algebra.QueryModelNode;
-import org.openrdf.query.algebra.QueryRoot;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.helpers.QueryModelVisitorBase;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
@@ -30,17 +27,16 @@ public class SPARQLRawParser {
 
 			System.out.println("object of the first pattern : " + patterns.get(0).getObjectVar().getValue());
 
-			
+
 			System.out.println("variables to project : ");
 			pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
 				public void meet(Projection projection) {
 					System.out.println(projection.getProjectionElemList().getElements());
 				}
 			});
-			
+
 
 		} catch (MalformedQueryException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
