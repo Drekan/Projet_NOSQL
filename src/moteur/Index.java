@@ -24,7 +24,7 @@ public class Index {
 				break;
 				
 			case "pos":
-				triple	= new int[]{p,o,s};
+				triple	= new int[]{p,o,s}; 
 				break;
 				
 			case "osp":

@@ -16,15 +16,13 @@ public final class RDFRawParser {
 
 	public static class RDFListener extends RDFHandlerBase {
 		
-		public int valeur = 0;
+		public int ressourcesNum = 0;
 		
 		public Dictionnaire dico;
-		public ArrayList<Index> indexes;
 		
-		public RDFListener(Dictionnaire d,ArrayList<Index> i) {
+		public RDFListener(Dictionnaire d) {
 			super();
 			this.dico = d;
-			this.indexes = i;
 		}
 		
 		
@@ -35,18 +33,13 @@ public final class RDFRawParser {
 			String object = st.getObject().toString();
 			
 			//this.trace.add(st.getSubject().toString());
-			this.valeur+=3;
-			this.dico.add(st.getSubject().toString());
-			this.dico.add(st.getPredicate().toString());
-			this.dico.add(st.getObject().toString());
-			
-			for(Index index : this.indexes) {
-				index.add(subject.hashCode(),predicate.hashCode(),object.hashCode());
-			}
+			this.ressourcesNum+=3;
+			this.dico.add(subject,predicate,object);
 
 		}
 
 	};
+	
 
 	public static void main(String args[]) throws FileNotFoundException {
 
@@ -67,19 +60,43 @@ public final class RDFRawParser {
 		indexes.add(new Index("osp"));
 		indexes.add(new Index("ops"));
 		
-		RDFListener rdf_l = new RDFListener(d,indexes);
+		RDFListener rdf_l = new RDFListener(d);
+		
+		ArrayList<String> test = new ArrayList<>();
+		
+		System.out.println(test);
 		
 		
 		rdfParser.setRDFHandler(rdf_l);
 		try {
 			System.out.println("La taille du dictionnaire est de " + d.getSize());
 			System.out.println("Maintenant, on parse");
-			rdfParser.parse(reader, "");
-			System.out.println("La taille du dictionnaire est de " + d.getSize());
-			System.out.println("Nombre de ressources lues : " + rdf_l.valeur);
 			
+			rdfParser.parse(reader, "");
+			
+			d.createDico();
+			
+			System.out.println("La taille du dictionnaire est de " + d.getSize());
+			System.out.println("Nombre de ressources lues : " + rdf_l.ressourcesNum);
+			
+			
+			
+			ArrayList<String[]> tuples = d.getTuples();
+			for(Index index : indexes) {
+				for(int i=0;i<tuples.size();i++) {
+					index.add(d.getValue(tuples.get(i)[0]),d.getValue(tuples.get(i)[1]),d.getValue(tuples.get(i)[2]));
+				}
+			
+				
+			}
+			
+			tuples.clear();
+			
+			System.out.println("taille de tuples : "+d.getTuples().size());
+			
+
 			Index sop = indexes.get(0);
-			System.out.println("\nIndex SOP : (10 premières valeurs)");
+			System.out.println("Index SOP : (10 premières valeurs)");
 			for(int i=0;i<10;i++) {
 				int[] triple = sop.getTriple(i);
 				System.out.println("["+triple[0]+","+triple[1]+","+triple[2]+"]");
