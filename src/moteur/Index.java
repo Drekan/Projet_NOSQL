@@ -3,6 +3,8 @@ package moteur;
 import java.util.ArrayList;
 
 public class Index {
+	//TODO statistiques, arborescence
+	
 	private String type; //Type de l'index : spo, sop, pso, pos, osp, ops
 	private ArrayList<int[]> index;
 

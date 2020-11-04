@@ -3,9 +3,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Dictionnaire {
+	
+	//TODO pouvoir dÃ©sactiver le tri lexicographique
 
-	private ArrayList<String[]> tuples; //Données non triées sous forme de tuples pour créer les index
-	private ArrayList<String> sortedRessources; //Données triées lexicographiquement
+	private ArrayList<String[]> tuples; //Donnï¿½es non triï¿½es sous forme de tuples pour crï¿½er les index
+	private ArrayList<String> sortedRessources; //Donnï¿½es triï¿½es lexicographiquement
 	private HashMap<Integer,String> intToString_dico;
 	private HashMap<String,Integer> stringToInt_dico;
 
@@ -24,7 +26,7 @@ public class Dictionnaire {
 		}
 	}
 
-	//Ajoute des données dans les ArrayList tuples et sortedRessources
+	//Ajoute des donnï¿½es dans les ArrayList tuples et sortedRessources
 	public void add(String s,String p,String o) {
 		this.tuples.add(new String[] {s,p,o});
 
@@ -33,8 +35,8 @@ public class Dictionnaire {
 		addDistinct(o);
 	}
 
-	//Remplissage des deux hashMap à partir des données triées
-	//Le tri sert à conserver l'ordre lexicographique
+	//Remplissage des deux hashMap ï¿½ partir des donnï¿½es triï¿½es
+	//Le tri sert ï¿½ conserver l'ordre lexicographique
 	public void createDico() {
 		this.sortedRessources.sort(null);
 
