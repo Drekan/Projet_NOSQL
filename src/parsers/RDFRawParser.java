@@ -60,43 +60,60 @@ public final class RDFRawParser {
 
 		rdfParser.setRDFHandler(rdf_l);
 		try {
-			System.out.println("Parsing des données...");
-
-			rdfParser.parse(reader, "");
-
-			System.out.println("Voulez-vous créer un dictionnire trié ou non ? (y/N)");
+			System.out.println("Parsing des donnï¿½es...");
+			
+			long startTime_d = System.nanoTime();
+			rdfParser.parse(reader,"");
+			long timeSpent_d = System.nanoTime() - startTime_d;
+			
+			
+			System.out.println("Voulez-vous crï¿½er un dictionnire triï¿½ ou non ? (y/N)");
 			Scanner sc = new Scanner(System.in);
 			String s = sc.nextLine();
 			if(s.equals("y")) {
-				System.out.println("Création du dictionnaire trié...");
+				System.out.println("Crï¿½ation du dictionnaire triï¿½...");
+				
+				startTime_d = System.nanoTime();
 				d.createDico(true);
+				timeSpent_d += System.nanoTime() - startTime_d;
 			}
 			else {
-				System.out.println("Création du dictionnaire non trié...");
+				System.out.println("Crï¿½ation du dictionnaire non triï¿½...");
+				
+				startTime_d = System.nanoTime();
 				d.createDico(false);
+				timeSpent_d += System.nanoTime() - startTime_d;
 			}
 
 			System.out.println("La taille du dictionnaire est de " + d.getSize());
 			System.out.println("Nombre total de ressources lues : " + rdf_l.ressourcesNum);
 
-			System.out.println("Création des index...");
+			System.out.println("Crï¿½ation des index...");
 			ArrayList<String[]> tuples = d.getTuples();
+			
+			long startTime_i = System.nanoTime();
 			for(Index index : indexes) {
 				for(int i=0;i<tuples.size();i++) {
 					index.add(d.getValue(tuples.get(i)[0]),d.getValue(tuples.get(i)[1]),d.getValue(tuples.get(i)[2]));
 					//System.out.println(d.getValue(tuples.get(i)[0])+" "+d.getValue(tuples.get(i)[1])+" "+d.getValue(tuples.get(i)[2]));
 				}
 			}
+			long timeSpent_i = System.nanoTime() - startTime_i;
 
 			tuples.clear();		
 
-			System.out.println("Fin du programme");
+			System.out.println("Fin du programme.");
+			
+			System.out.println("\n---Statistiques---");
+			System.out.println("Temps de gÃ©nÃ©ration du dictionnaire : " + timeSpent_d/1000000 + "ms");
+			System.out.println("Temps de gÃ©nÃ©ration de l'index : " + timeSpent_i/1000000 + "ms");
+			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d)/1000000 + "ms\n");
 
-			//Affichage du début de l'index SOP
+			//Affichage du dï¿½but de l'index SOP
 			Index sop = indexes.get(0);
-			System.out.println("Index SOP : (10 premières valeurs)");
+			System.out.println("Index SOP : (10 premiï¿½res valeurs)");
 			HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> myMap = sop.getIndex();
-			Set listKeys=myMap.keySet();  // Obtenir la liste des clés
+			Set listKeys=myMap.keySet();  // Obtenir la liste des clï¿½s
 			Iterator iterateur=listKeys.iterator();
 			int i = 0;
 			while(i<10 && iterateur.hasNext())
@@ -106,7 +123,7 @@ public final class RDFRawParser {
 
 				HashMap<Integer, ArrayList<Integer>> mySousMap = myMap.get(key);
 
-				Set listSousKeys=mySousMap.keySet();  // Obtenir la liste des clés
+				Set listSousKeys=mySousMap.keySet();  // Obtenir la liste des clï¿½s
 				Iterator sousIterateur=listSousKeys.iterator();
 
 				while(i<10 && sousIterateur.hasNext()) {
