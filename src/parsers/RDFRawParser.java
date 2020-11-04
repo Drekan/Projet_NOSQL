@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;
@@ -60,8 +61,17 @@ public final class RDFRawParser {
 
 			rdfParser.parse(reader, "");
 
-			System.out.println("Création du dictionnaire...");
-			d.createDico();
+			System.out.println("Voulez-vous créer un dictionnire trié ou non ? (y/N)");
+			Scanner sc = new Scanner(System.in);
+			String s = sc.nextLine();
+			if(s.equals("y")) {
+				System.out.println("Création du dictionnaire trié...");
+				d.createDico(true);
+			}
+			else {
+				System.out.println("Création du dictionnaire non trié...");
+				d.createDico(false);
+			}
 
 			System.out.println("La taille du dictionnaire est de " + d.getSize());
 			System.out.println("Nombre total de ressources lues : " + rdf_l.ressourcesNum);

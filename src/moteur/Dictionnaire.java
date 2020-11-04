@@ -37,8 +37,10 @@ public class Dictionnaire {
 
 	//Remplissage des deux hashMap � partir des donn�es tri�es
 	//Le tri sert � conserver l'ordre lexicographique
-	public void createDico() {
-		this.sortedRessources.sort(null);
+	public void createDico(Boolean tri) {
+		
+		if(tri)
+			this.sortedRessources.sort(null);
 
 		for(int i=0; i<this.sortedRessources.size();i++) {
 			this.intToString_dico.put(i,this.sortedRessources.get(i));
