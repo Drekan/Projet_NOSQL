@@ -4,7 +4,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;
@@ -81,20 +84,38 @@ public final class RDFRawParser {
 			for(Index index : indexes) {
 				for(int i=0;i<tuples.size();i++) {
 					index.add(d.getValue(tuples.get(i)[0]),d.getValue(tuples.get(i)[1]),d.getValue(tuples.get(i)[2]));
+					//System.out.println(d.getValue(tuples.get(i)[0])+" "+d.getValue(tuples.get(i)[1])+" "+d.getValue(tuples.get(i)[2]));
 				}
 			}
 
 			tuples.clear();		
-			
+
 			System.out.println("Fin du programme");
 
 			//Affichage du début de l'index SOP
-			/*Index sop = indexes.get(0);
+			Index sop = indexes.get(0);
 			System.out.println("Index SOP : (10 premières valeurs)");
-			for(int i=0;i<10;i++) {
-				int[] triple = sop.getTriple(i);
-				System.out.println("["+triple[0]+","+triple[1]+","+triple[2]+"]");
-			}*/
+			HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> myMap = sop.getIndex();
+			Set listKeys=myMap.keySet();  // Obtenir la liste des clés
+			Iterator iterateur=listKeys.iterator();
+			int i = 0;
+			while(i<10 && iterateur.hasNext())
+			{
+				Object key= iterateur.next();
+				System.out.println (key+"=>");
+
+				HashMap<Integer, ArrayList<Integer>> mySousMap = myMap.get(key);
+
+				Set listSousKeys=mySousMap.keySet();  // Obtenir la liste des clés
+				Iterator sousIterateur=listSousKeys.iterator();
+
+				while(i<10 && sousIterateur.hasNext()) {
+					Object souskey= sousIterateur.next();
+					System.out.println ("       "+souskey+"=>"+mySousMap.get(souskey).toString());
+					i++;
+				}
+			}
+
 
 		} catch (Exception e) {
 
