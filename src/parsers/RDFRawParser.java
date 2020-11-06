@@ -45,8 +45,19 @@ public final class RDFRawParser {
 
 		Reader reader = new FileReader("datasets/100K.rdfxml");
 		org.openrdf.rio.RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
+		
+		System.out.println("Voulez-vous cr�er un dictionnire tri� ou non ? (y/N)");
+		Scanner sc = new Scanner(System.in);
+		String s = sc.nextLine();
+		Boolean sort;
+		if(s.equals("y")) {
+			sort = true;
+		}
+		else {
+			sort = false;
+		}
 
-		Dictionnaire d = new Dictionnaire();
+		Dictionnaire d = new Dictionnaire(sort);
 		ArrayList<Index> indexes = new ArrayList<>();
 
 		indexes.add(new Index("spo"));
@@ -64,26 +75,9 @@ public final class RDFRawParser {
 			
 			long startTime_d = System.nanoTime();
 			rdfParser.parse(reader,"");
+			d.createDico();
 			long timeSpent_d = System.nanoTime() - startTime_d;
 			
-			
-			System.out.println("Voulez-vous cr�er un dictionnire tri� ou non ? (y/N)");
-			Scanner sc = new Scanner(System.in);
-			String s = sc.nextLine();
-			if(s.equals("y")) {
-				System.out.println("Cr�ation du dictionnaire tri�...");
-				
-				startTime_d = System.nanoTime();
-				d.createDico(true);
-				timeSpent_d += System.nanoTime() - startTime_d;
-			}
-			else {
-				System.out.println("Cr�ation du dictionnaire non tri�...");
-				
-				startTime_d = System.nanoTime();
-				d.createDico(false);
-				timeSpent_d += System.nanoTime() - startTime_d;
-			}
 
 			System.out.println("La taille du dictionnaire est de " + d.getSize());
 			System.out.println("Nombre total de ressources lues : " + rdf_l.ressourcesNum);

@@ -8,15 +8,17 @@ public class Dictionnaire {
 
 	private ArrayList<String[]> tuples; //Donn�es non tri�es sous forme de tuples pour cr�er les index
 	private ArrayList<String> sortedRessources; //Donn�es tri�es lexicographiquement
+	private Boolean lexicographical_sort;
 	private HashMap<Integer,String> intToString_dico;
 	private HashMap<String,Integer> stringToInt_dico;
 
 
-	public Dictionnaire() {
+	public Dictionnaire(Boolean sort) {
 		this.intToString_dico = new HashMap<Integer,String>();
 		this.stringToInt_dico = new HashMap<String,Integer>();
 		this.sortedRessources = new ArrayList<>();
 		this.tuples = new ArrayList<>();
+		this.lexicographical_sort = sort;
 	}
 
 
@@ -29,17 +31,30 @@ public class Dictionnaire {
 	//Ajoute des donn�es dans les ArrayList tuples et sortedRessources
 	public void add(String s,String p,String o) {
 		this.tuples.add(new String[] {s,p,o});
+		if(this.lexicographical_sort) {	
 
-		addDistinct(s);
-		addDistinct(p);
-		addDistinct(o);
+			addDistinct(s);
+			addDistinct(p);
+			addDistinct(o);
+		}
+		else {
+			this.intToString_dico.put(s.hashCode(),s);
+			this.stringToInt_dico.put(s,s.hashCode());
+			
+			this.intToString_dico.put(p.hashCode(),p);
+			this.stringToInt_dico.put(p,p.hashCode());
+			
+			this.intToString_dico.put(o.hashCode(),o);
+			this.stringToInt_dico.put(o,o.hashCode());
+		}
+
 	}
 
 	//Remplissage des deux hashMap � partir des donn�es tri�es
 	//Le tri sert � conserver l'ordre lexicographique
-	public void createDico(Boolean tri) {
+	public void createDico() {
 		
-		if(tri)
+		if(this.lexicographical_sort)
 			this.sortedRessources.sort(null);
 
 		for(int i=0; i<this.sortedRessources.size();i++) {
