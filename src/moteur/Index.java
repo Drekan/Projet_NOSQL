@@ -70,6 +70,8 @@ public class Index {
 		return index;
 	}
 
+	public String getType(){return this.type;}
+
 	public int size() {
 		return this.index.size();
 	}

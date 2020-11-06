@@ -25,6 +25,8 @@ public class SPARQLRawParser {
 
 			System.out.println("first pattern : " + patterns.get(0));
 
+			System.out.println("second pattern : " + patterns.get(1));
+
 			System.out.println("object of the first pattern : " + patterns.get(0).getObjectVar().getValue());
 
 

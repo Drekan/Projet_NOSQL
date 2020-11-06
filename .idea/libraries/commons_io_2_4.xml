@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="commons-io-2.4">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/openrdf-sesame-2.0-onejar.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-model-2.7.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-queryalgebra-evaluation-2.7.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-rio-api-2.7.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-rio-extensions-api-0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-rio-rdfxml-2.7.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sesame-util-2.7.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-simple-1.6.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

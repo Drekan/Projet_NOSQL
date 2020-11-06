@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
 
+import moteur.Solveur;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -61,6 +62,7 @@ public final class RDFRawParser {
 		indexes.add(new Index("osp"));
 		indexes.add(new Index("ops"));
 
+		Solveur solveur = new Solveur(d, indexes);
 		RDFListener rdf_l = new RDFListener(d);
 
 		rdfParser.setRDFHandler(rdf_l);
@@ -88,6 +90,10 @@ public final class RDFRawParser {
 			}
 			long timeSpent_i = System.nanoTime() - startTime_i;
 
+			solveur.solve("SELECT ?x WHERE{" +
+					"?x <http://purl.org/stuff/rev#title> \"Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius\" ." +
+					"?x <http://purl.org/stuff/rev#rating> \"9\"" +
+					"}");
 			tuples.clear();		
 
 			System.out.println("Fin du programme.");
