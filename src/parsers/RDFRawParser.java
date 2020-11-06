@@ -49,13 +49,7 @@ public final class RDFRawParser {
 		System.out.println("Voulez-vous cr�er un dictionnire tri� ou non ? (y/N)");
 		Scanner sc = new Scanner(System.in);
 		String s = sc.nextLine();
-		Boolean sort;
-		if(s.equals("y")) {
-			sort = true;
-		}
-		else {
-			sort = false;
-		}
+		Boolean sort = s.equals("y");
 
 		Dictionnaire d = new Dictionnaire(sort);
 		ArrayList<Index> indexes = new ArrayList<>();
