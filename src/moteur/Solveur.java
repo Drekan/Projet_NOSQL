@@ -50,7 +50,9 @@ public class Solveur {
 
         HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>(); //TODO: faire l'intersection des AL pour avoir le résultat de la requete
         System.out.println("-- Lecture des patterns");
+        
         for(StatementPattern sp: patterns) {
+        	
             //objectif: déterminer l'index
             Var s = sp.getSubjectVar();
             Var p = sp.getPredicateVar();
@@ -81,6 +83,7 @@ public class Solveur {
                     allResults.get(o.getName()).add(resO);
                 }
             } else if (p.hasValue()) { //on commence par un index sxx
+            	
                 valP = dico.getValue(p.getValue().stringValue());
                 if (s.hasValue()) { //index pso
                     valS = dico.getValue(s.getValue().stringValue());
@@ -135,7 +138,6 @@ public class Solveur {
                 allResults.get(p.getName()).add(resP);
             }
         }
-        System.out.println("PQ SA MARCHE PO");
 
         System.out.println("-- Intersections");
             //Intersections pour avoir les résultats
@@ -157,7 +159,6 @@ public class Solveur {
                 public void meet(Projection projection) {
                     List<ProjectionElem> test = projection.getProjectionElemList().getElements();
                     for(ProjectionElem p: test){
-                        System.out.println("CC");
                         varToReturn.add(p.toString()); //TODO: vérifier le toString
                     }
                 }

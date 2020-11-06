@@ -32,10 +32,25 @@ public final class RDFRawParser {
 
 		@Override
 		public void handleStatement(Statement st) {
-			String subject = st.getSubject().toString() ;
+			String subject = st.getSubject().toString();
 			String predicate = st.getPredicate().toString();
 			String object = st.getObject().toString();
-
+				
+			if(subject.startsWith("\"")) {
+				subject = subject.substring(1,subject.length()-1);
+				System.out.println(subject);
+			}
+			
+			if(predicate.startsWith("\"")) {
+				predicate = predicate.substring(1,predicate.length()-1);
+				
+			}
+			
+			if(object.startsWith("\"")) {
+				object = object.substring(1,object.length()-1);
+				
+			}
+			
 			this.ressourcesNum+=3;
 			this.dico.add(subject,predicate,object);
 		}
@@ -90,10 +105,7 @@ public final class RDFRawParser {
 			}
 			long timeSpent_i = System.nanoTime() - startTime_i;
 
-			solveur.solve("SELECT ?x WHERE{" +
-					"?x <http://purl.org/stuff/rev#title> \"Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius\" ." +
-					"?x <http://purl.org/stuff/rev#rating> \"9\"" +
-					"}");
+			solveur.solve("SELECT ?x WHERE{ ?x <http://purl.org/stuff/rev#title> \"Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius\" . ?x <http://purl.org/stuff/rev#rating> \"9\"}");
 			tuples.clear();		
 
 			System.out.println("Fin du programme.");

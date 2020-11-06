@@ -46,6 +46,7 @@ public class Dictionnaire {
 			
 			this.intToString_dico.put(o.hashCode(),o);
 			this.stringToInt_dico.put(o,o.hashCode());
+
 		}
 
 	}
@@ -74,6 +75,7 @@ public class Dictionnaire {
 	}
 
 	public int getValue(String value) {
+		//System.out.println("Value demandée : " + value);
 		return this.stringToInt_dico.get(value);
 	}
 
