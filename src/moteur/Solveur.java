@@ -40,7 +40,10 @@ public class Solveur {
 
     public void addKey(Var v, HashMap<String, ArrayList<ArrayList<Integer>>> allResults){
         if(!v.hasValue()){
-            allResults.put(v.getName(),new ArrayList<>());
+            if(!allResults.containsKey(v.getName())) {
+                allResults.put(v.getName(), new ArrayList<>());
+                System.out.println(v+" ajoutée à AllResults");
+            }
         }
     }
     public void solve(String req) throws MalformedQueryException {
@@ -48,11 +51,15 @@ public class Solveur {
         ParsedQuery pq = sparqlParser.parseQuery(req, null);
         List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
 
+
         HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>(); //TODO: faire l'intersection des AL pour avoir le résultat de la requete
+        //Clé = la valeur recherchée
+        //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
+
         System.out.println("-- Lecture des patterns");
         
         for(StatementPattern sp: patterns) {
-        	
+        	int nbPattern = 0;
             //objectif: déterminer l'index
             Var s = sp.getSubjectVar();
             Var p = sp.getPredicateVar();
@@ -64,15 +71,16 @@ public class Solveur {
             addKey(o, allResults);
 
             //On regarde si s, p ou o a une valeur = est une constante (pas une variable donc)
-            //TODO Traiter le cas où y'a pas de valeurs
             if (s.hasValue()) { //on commence par un index sxx
                 valS = dico.getValue(s.getValue().stringValue());
                 if (p.hasValue()) { //index spo
                     valP = dico.getValue(p.getValue().stringValue()); //TODO à vérifier
                     allResults.get(o.getName()).add(spo.getIndex().get(valS).get(valP)); //TODO
+                    System.out.println("SPO");
                 } else if (o.hasValue()) { //index sop
                     valO = dico.getValue(o.getValue().stringValue());
                     allResults.get(p.getName()).add(sop.getIndex().get(valS).get(valO));
+                    System.out.println("SOP");
                 } else { //TODO à vérifier avec les tailles (si un plus opti que l'autre)
                     Set<Integer> keys = sop.getIndex().get((valS)).keySet();
                     ArrayList<Integer> resO = new ArrayList();
@@ -81,17 +89,20 @@ public class Solveur {
                         allResults.get(p.getName()).add(sop.getIndex().get((valS)).get(i));
                     }
                     allResults.get(o.getName()).add(resO);
+                    System.out.println("S");
                 }
             } else if (p.hasValue()) { //on commence par un index sxx
-            	
                 valP = dico.getValue(p.getValue().stringValue());
                 if (s.hasValue()) { //index pso
                     valS = dico.getValue(s.getValue().stringValue());
                     allResults.get(o.getName()).add(pso.getIndex().get(valP).get(valS));
-
+                    System.out.println("PSO");
                 } else if (o.hasValue()) {//index pos
+                    //Il y a un problème avec l'imbrication d'AL
                     valO = dico.getValue(o.getValue().stringValue());
+                    System.out.println("POS");
                     allResults.get(s.getName()).add(pos.getIndex().get(valP).get(valO));
+                    System.out.println(allResults.get(s.getName()));
                 } else {
                     Set<Integer> keys = pso.getIndex().get((valP)).keySet();
                     ArrayList<Integer> resS = new ArrayList();
@@ -100,15 +111,18 @@ public class Solveur {
                         allResults.get(s.getName()).add(pso.getIndex().get((valP)).get(i));
                     }
                     allResults.get(s.getName()).add(resS);
+                    System.out.println("P");
                 }
             } else if (o.hasValue()) { //on commence par un index oxx
                 valO = dico.getValue(o.getValue().stringValue());
                 if (s.hasValue()) { //index osp
                     valS = dico.getValue(s.getValue().stringValue());
                     allResults.get(p.getName()).add(osp.getIndex().get(valO).get(valS));
+                    System.out.println("OSP");
                 } else if (p.hasValue()) { //index ops
                     valP = dico.getValue(p.getValue().stringValue());
                     allResults.get(s.getName()).add(ops.getIndex().get(valO).get(valP));
+                    System.out.println("OPS");
                 } else {
                     Set<Integer> keys = osp.getIndex().get((valO)).keySet();
                     ArrayList<Integer> resS = new ArrayList();
@@ -117,6 +131,7 @@ public class Solveur {
                         allResults.get(s.getName()).add(osp.getIndex().get((valO)).get(i));
                     }
                     allResults.get(s.getName()).add(resS);
+                    System.out.println("O");
                 }
             } else {//si on a 3 variables -- choisir un opti ?
                 //Choix de base = spo
@@ -136,7 +151,9 @@ public class Solveur {
                 }
                 allResults.get(s.getName()).add(resS);
                 allResults.get(p.getName()).add(resP);
+                System.out.println("xxx");
             }
+            nbPattern++;
         }
 
         System.out.println("-- Intersections");
@@ -145,11 +162,14 @@ public class Solveur {
             ArrayList<Integer> result = new ArrayList<>();
             for(String key: allResults.keySet()){
                 result = allResults.get(key).get(0);
+                System.out.println(allResults.get(key).size()-1);
+                //!!ça ne rentre pas dans la boucle car la taille = 1
                 for(int i = 1; i<allResults.get(key).size()-1;i++){
                     result.retainAll(allResults.get(key).get(i));
                 }
                 results.put(key,result);
             }
+        System.out.println(result);
             //TODO: regarder ce qu'il a dans AllResults
 
             ArrayList<String> varToReturn = new ArrayList<>();
@@ -165,7 +185,15 @@ public class Solveur {
             });
 
             for(String s: varToReturn){
-                System.out.println(s+" -- "+ results.get(s));
+                //System.out.println(s+" ++ "+ results.get(s)); //normal car s est entre ""
+            }
+
+            for(String k: allResults.keySet()){
+                System.out.println(k + allResults.get(k).toString());
+                //for(Integer i: results.get) {
+                 //   System.out.println("hey "+k);
+                    //System.out.println(k + " ++ " + results.get(k).get(i));
+                //}
             }
     }
 }

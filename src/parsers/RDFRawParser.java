@@ -62,10 +62,12 @@ public final class RDFRawParser {
 		Reader reader = new FileReader("datasets/100K.rdfxml");
 		org.openrdf.rio.RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
 		
-		System.out.println("Voulez-vous cr�er un dictionnire tri� ou non ? (y/N)");
-		Scanner sc = new Scanner(System.in);
-		String s = sc.nextLine();
-		Boolean sort = s.equals("y");
+		System.out.println("Voulez-vous cr�er un dictionnaire tri� ou non ? (y/N)");
+		//Scanner sc = new Scanner(System.in);
+		//String s = sc.nextLine();
+		//Boolean sort = s.equals("y");
+		//TODO: à ENLEVER
+		Boolean sort=false;
 
 		Dictionnaire d = new Dictionnaire(sort);
 		ArrayList<Index> indexes = new ArrayList<>();
