@@ -14,8 +14,6 @@ public class Index {
 		this.index = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>();
 	}
 
-
-
 	public void addRec(int i1, int i2, int i3) {
 		HashMap<Integer, ArrayList<Integer>> sousTuple = new HashMap<Integer, ArrayList<Integer>>();
 		ArrayList<Integer> values = new ArrayList<Integer>();

@@ -7,10 +7,13 @@ import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.query.parser.sparql.SPARQLParser;
 
+import java.io.*;
 import java.util.*;
 
 public class Solveur {
     //TODO: gérer l'UTF-8
+    //TODO: tester avec des requetes avec plus de resultats
+
     Dictionnaire dico;
     Index spo, sop, pso, pos, osp, ops;
 
@@ -38,6 +41,22 @@ public class Solveur {
         }
     }
 
+    //TODO file not found ?
+    public void traiterQueries() throws IOException, MalformedQueryException {
+        try {
+            File myObj = new File("queries");
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                solve(data);
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
     //Ajouter les variables de chaque pattern à notre structure allResults (récupère tous les résultats
     // pour chaque variable, pour chaque pattern)
     public void addKey(Var v, HashMap<String, ArrayList<ArrayList<Integer>>> allResults){
@@ -51,17 +70,18 @@ public class Solveur {
 
     //Méthode principale de la classe
     public void solve(String req) throws MalformedQueryException {
+        System.out.println("\nRequete: "+req);
         //Utilisation d'une instance de SPARLQLParser
         SPARQLParser sparqlParser = new SPARQLParser();
         ParsedQuery pq = sparqlParser.parseQuery(req, null);
         List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
 
-        HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>(); //TODO: faire l'intersection des AL pour avoir le résultat de la requete
-        // Cette
+        HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>();
+        // Cette structure permet d'obtenir tous les résultats pour toutes les variables pour tous les patterns
         //Clé = la valeur recherchée
         //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
 
-        System.out.println("\n-- Lecture de chaque pattern");
+        System.out.println("-- Lecture de chaque pattern");
 
         for(StatementPattern sp: patterns) {
             //L'objectif de cette boucle est de déterminer l'index dans lequel on va pouvoir
@@ -80,11 +100,13 @@ public class Solveur {
 
             int valS, valP, valO;
             //On regarde si s, p ou o a une valeur = est une constante (pas une variable donc)
+
+            //TODO vérifier que ça marche pour chaque index
             if (s.hasValue()) { //index sxx
                 valS = dico.getValue(s.getValue().stringValue());
                 if (p.hasValue()) { //index spo
-                    valP = dico.getValue(p.getValue().stringValue()); //TODO à vérifier
-                    allResults.get(o.getName()).add(spo.getIndex().get(valS).get(valP)); //TODO
+                    valP = dico.getValue(p.getValue().stringValue());
+                    allResults.get(o.getName()).add(spo.getIndex().get(valS).get(valP));
                     System.out.println("SPO");
                 } else if (o.hasValue()) { //index sop
                     valO = dico.getValue(o.getValue().stringValue());
@@ -102,6 +124,8 @@ public class Solveur {
                     allResults.get(o.getName()).add(resO);
                     System.out.println("S");
                 }
+                //TODO les variables n’apparaissaient que dans les sujets et objets (et jamais au
+                //niveau des propriétés).
             } else if (p.hasValue()) { //index pxx
                 valP = dico.getValue(p.getValue().stringValue());
                 if (s.hasValue()) { //index pso
@@ -172,7 +196,6 @@ public class Solveur {
             }
         }
 
-        System.out.println("-- Intersections");
         //Dans allResults on a les résultats de chaque variable pour chaque pattern
         //Ici on fait pour chaque variable l'intersection des résultats
         //Ca nous permet d'obtenir pour chaque variable l'ensemble des résultas
@@ -187,7 +210,6 @@ public class Solveur {
             }
             results.put(key,result);
         }
-        //System.out.println(result);
 
         //Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
         ArrayList<String> varToReturn = new ArrayList<>();
@@ -196,23 +218,35 @@ public class Solveur {
             public void meet(Projection projection) {
                 List<ProjectionElem> test = projection.getProjectionElemList().getElements();
                 for(ProjectionElem p: test){
-                    varToReturn.add(p.toString()); //TODO: vérifier le toString
+                    varToReturn.add(p.getSourceName());
                 }
             }
         });
 
         for(String s: varToReturn){
-            //System.out.println(s+" ++ "+ results.get(s)); //
-            // TODO: régler le "problème" des "" vis à vis de s
+            System.out.println(s+": "+ printRes(results.get(s)));
         }
 
-        for(String k: allResults.keySet()){
-            System.out.println(k + allResults.get(k).toString());
+        //for(String k: allResults.keySet()){
+         //   System.out.println(k + allResults.get(k).toString());
             //for(Integer i: results.get) {
             //System.out.println(k + " ++ " + results.get(k).get(i));
             //}
+        //}
+
+        //TODO: vérifier les résultats des requetes avec JENA
+    }
+
+    public String printRes(ArrayList<Integer> tab){
+        String res = "";
+        for(Integer i: tab){
+            res+=this.dico.getValue(i)+" ";
         }
-        //TODO: vérifier les résultats des requetes
+        return res;
+    }
+
+    public void checkReq(String toCompare){
+        System.out.println(this.dico.getValue(toCompare));
     }
 }
 

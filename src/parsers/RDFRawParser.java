@@ -107,10 +107,7 @@ public final class RDFRawParser {
 			}
 			long timeSpent_i = System.nanoTime() - startTime_i;
 
-			String query = "SELECT ?x WHERE{ ?x <http://purl.org/stuff/rev#title> \"Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius\" . ?x <http://purl.org/stuff/rev#rating> \"9\"}";
-			//TODO: faire un fichier avec plusieurs requetes
-			System.out.println("Requete: "+query);
-			solveur.solve(query);
+			solveur.traiterQueries();
 			tuples.clear();		
 
 			System.out.println("Fin du programme.");
