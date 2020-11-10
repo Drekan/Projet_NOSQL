@@ -203,8 +203,21 @@ public class Solveur {
         });
 
         for(String s: varToReturn){
+        	try {
+                FileWriter myWriter = new FileWriter("results/queryResult.csv");
+                
+                //TODO : QUELLE STRUCTURRRE POUR LE CSV ??? 
+                myWriter.write(req+"\n");
+                myWriter.write(s+": "+ printRes(results.get(s))+"\n\n");
+                myWriter.close();
+              } catch (IOException e) {
+                System.out.println("Erreur dans l'écriture du résultat de la requête");
+                e.printStackTrace();
+              }
             System.out.println(s+": "+ printRes(results.get(s)));
         }
+        
+        
 
         //for(String k: allResults.keySet()){
          //   System.out.println(k + allResults.get(k).toString());
