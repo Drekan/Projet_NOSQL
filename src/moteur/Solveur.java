@@ -1,5 +1,14 @@
 package moteur;
 
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.util.FileManager;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.*;
 import org.openrdf.query.algebra.helpers.QueryModelVisitorBase;
@@ -239,6 +248,44 @@ public class Solveur {
         //}
 
         //TODO: vérifier les résultats des requetes avec JENA
+    }
+    
+    public void jenaQueries(String queriesPath,String dataPath) {
+    	Model model = ModelFactory.createDefaultModel();
+		InputStream in = FileManager.get().open(dataPath);
+		
+		model.read(in, null,"RDF/XML");
+		
+		try {
+            File myObj = new File(queriesPath);
+            Scanner myReader = new Scanner(myObj);
+
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+        		Query query = QueryFactory.create(data);
+        		QueryExecution qexec = QueryExecutionFactory.create(query,model);
+    			try {				
+    				ResultSet rs = qexec.execSelect();
+    				System.out.println("Query : "+data);
+    				ResultSetFormatter.out(System.out, rs, query);
+    				System.out.println();
+    				
+    			} finally {
+    				qexec.close();
+    			}
+
+            }
+            
+
+            
+            //(String req,String dataPath,String queriesPath,String outputPath)
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+		
+
     }
 
     public String printRes(ArrayList<Integer> tab){

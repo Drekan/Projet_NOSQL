@@ -124,6 +124,10 @@ public final class RDFRawParser {
 			solveur.traiterQueries(queriesPath,outputPath);
 			timeSpent_s = System.nanoTime() - timeSpent_s;
 			
+			
+			System.out.println("Appel de JENA : ");
+			solveur.jenaQueries(queriesPath,dataPath);
+			
 			stats.setTotalTime(timeSpent_i+timeSpent_d+timeSpent_s);
 			
 			tuples.clear();		
