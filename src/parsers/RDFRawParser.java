@@ -126,7 +126,9 @@ public final class RDFRawParser {
 			
 			
 			System.out.println("Appel de JENA : ");
+			long timeSpent_JENA = System.nanoTime();
 			solveur.jenaQueries(queriesPath,dataPath);
+			timeSpent_JENA = System.nanoTime() - timeSpent_JENA;
 			
 			stats.setTotalTime(timeSpent_i+timeSpent_d+timeSpent_s);
 			
@@ -138,7 +140,8 @@ public final class RDFRawParser {
 			System.out.println("Temps de génération du dictionnaire : " + timeSpent_d/1000000 + "ms");
 			System.out.println("Temps de génération de l'index : " + timeSpent_i/1000000 + "ms");
 			System.out.println("Temps de traitement des requêtes : " + timeSpent_s/1000000 + "ms");
-			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d+timeSpent_s)/1000000 + "ms\n");
+			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d+timeSpent_s)/1000000 + "ms");
+			System.out.println("Temps total JENA : " + (timeSpent_JENA)/1000000 + "ms\n");
 
 
 		} catch (Exception e) {
