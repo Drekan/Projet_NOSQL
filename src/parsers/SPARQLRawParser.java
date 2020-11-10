@@ -41,7 +41,5 @@ public class SPARQLRawParser {
 		} catch (MalformedQueryException e) {
 			e.printStackTrace();
 		}
-
 	}
-
 }
