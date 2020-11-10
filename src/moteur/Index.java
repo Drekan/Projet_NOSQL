@@ -15,23 +15,17 @@ public class Index {
 	}
 
 	public void addRec(int i1, int i2, int i3) {
-		HashMap<Integer, ArrayList<Integer>> sousTuple = new HashMap<Integer, ArrayList<Integer>>();
-		ArrayList<Integer> values = new ArrayList<Integer>();
-
-		if(this.index.containsKey(i1)) {
-			if(this.index.get(i1).containsKey(i2)) {
-				values.addAll(this.index.get(i1).get(i2));
-			}
-			values.add(i3);
-			sousTuple.put(i2, values);
-			sousTuple.putAll(this.index.get(i1));
-			this.index.replace(i1, sousTuple);
+		if(!this.index.containsKey(i1)){
+			this.index.put(i1,new HashMap<>());
 		}
-		else {
-			values.add(i3);
-			sousTuple.put(i2, values);
-			this.index.put(i1, sousTuple);
+		
+		if(!this.index.get(i1).containsKey(i2)){
+			this.index.get(i1).put(i2,new ArrayList<>());
 		}
+		
+		this.index.get(i1).get(i2).add(i3);
+		
+	
 	}
 
 

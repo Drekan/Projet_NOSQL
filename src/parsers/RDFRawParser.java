@@ -117,30 +117,6 @@ public final class RDFRawParser {
 			System.out.println("Temps de génération de l'index : " + timeSpent_i/1000000 + "ms");
 			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d)/1000000 + "ms\n");
 
-			//Affichage du d�but de l'index SOP
-			Index sop = indexes.get(0);
-			System.out.println("Index SOP : (10 premi�res valeurs)");
-			HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> myMap = sop.getIndex();
-			Set listKeys=myMap.keySet();  // Obtenir la liste des cl�s
-			Iterator iterateur=listKeys.iterator();
-			int i = 0;
-			while(i<10 && iterateur.hasNext())
-			{
-				Object key= iterateur.next();
-				System.out.println (key+"=>");
-
-				HashMap<Integer, ArrayList<Integer>> mySousMap = myMap.get(key);
-
-				Set listSousKeys=mySousMap.keySet();  // Obtenir la liste des cl�s
-				Iterator sousIterateur=listSousKeys.iterator();
-
-				while(i<10 && sousIterateur.hasNext()) {
-					Object souskey= sousIterateur.next();
-					System.out.println ("       "+souskey+"=>"+mySousMap.get(souskey).toString());
-					i++;
-				}
-			}
-
 
 		} catch (Exception e) {
 

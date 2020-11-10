@@ -15,36 +15,42 @@ public class Solveur {
     //TODO: tester avec des requetes avec plus de resultats
 
     Dictionnaire dico;
-    Index spo, sop, pso, pos, osp, ops;
+    
+    //on accède aux index par leur type : les clefs sont ["spo","sop",...,"ops"]
+    HashMap<String,Index> indexes;
+    
+    /* 
+     * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
+     * 
+     * Exemple :
+     * 12 <=> p et o ont une valeur connue, on utilise donc un index pos
+     * 0 <=> s a une valeur connue, on utilise donc un index spo
+     */
+    HashMap<String,String> indexMap;
 
     public Solveur(Dictionnaire dico, ArrayList<Index> indexes){
-        this.dico = dico;
+        this.indexes = new HashMap<>();
+        this.indexMap = new HashMap<>();
+    	this.dico = dico;
+    	
         for(Index i: indexes){
-            if(i.getType().equals("spo")){
-                this.spo=i;
-            }
-            if(i.getType().equals("sop")){
-                this.sop=i;
-            }
-            if(i.getType().equals("ops")){
-                this.ops=i;
-            }
-            if(i.getType().equals("osp")){
-                this.osp=i;
-            }
-            if(i.getType().equals("pos")){
-                this.pos=i;
-            }
-            if(i.getType().equals("pso")){
-                this.pso=i;
-            }
+            this.indexes.put(i.getType(),i);
         }
+        
+        this.indexMap.put("","spo"); //cas où pattern = ?x ?p ?y
+        this.indexMap.put("0","spo");
+        this.indexMap.put("1","pso");
+        this.indexMap.put("2","osp");
+        this.indexMap.put("01","spo");
+        this.indexMap.put("02","sop");
+        this.indexMap.put("12","pos");
+        
     }
 
     //TODO file not found ?
     public void traiterQueries() throws IOException, MalformedQueryException {
         try {
-            File myObj = new File("queries");
+            File myObj = new File("out/production/Projet_NOSQL/queries");
             Scanner myReader = new Scanner(myObj);
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
@@ -56,16 +62,23 @@ public class Solveur {
             e.printStackTrace();
         }
     }
+    
+    public String encodePattern(StatementPattern sp) {
+    	String subject = (sp.getSubjectVar().hasValue()?"0":"");
+    	String predicate = (sp.getPredicateVar().hasValue()?"1":"");
+    	String object = (sp.getObjectVar().hasValue()?"2":"");
+    	
+    	return subject+predicate+object;
+    }
+    
 
     //Ajouter les variables de chaque pattern à notre structure allResults (récupère tous les résultats
     // pour chaque variable, pour chaque pattern)
-    public void addKey(Var v, HashMap<String, ArrayList<ArrayList<Integer>>> allResults){
-        if(!v.hasValue()){
-            if(!allResults.containsKey(v.getName())) {
-                allResults.put(v.getName(), new ArrayList<>());
-                //System.out.println(v+" ajoutée à AllResults");
-            }
-        }
+    public void addKey(String v, HashMap<String, ArrayList<ArrayList<Integer>>> allResults){
+    	if(!allResults.containsKey(v)) {
+    		allResults.put(v, new ArrayList<>());
+    		//System.out.println(v+" ajoutée à AllResults");
+    	}
     }
 
     //Méthode principale de la classe
@@ -84,99 +97,61 @@ public class Solveur {
         System.out.println("-- Lecture de chaque pattern");
 
         for(StatementPattern sp: patterns) {
-            //L'objectif de cette boucle est de déterminer l'index dans lequel on va pouvoir
-            // récupérer l'information
-            System.out.print("  Index utilisé: ");
+        	
+        	//on encode le pattern
+        	String indexType = this.indexMap.get(this.encodePattern(sp));
+        	Index index = this.indexes.get(indexType);
+        	
+            System.out.println("  Index utilisé: " + indexType);
+            
+            //les termes de la requete sont recuperes...
+            ArrayList<Var> varList = new ArrayList<>();
+            varList.add(sp.getSubjectVar());
+            varList.add(sp.getPredicateVar());
+            varList.add(sp.getObjectVar());
+            
+            //...puis separes en constante / variable
+            ArrayList<String> variables = new ArrayList<>();
+            ArrayList<String> constantes = new ArrayList<>();
+            
+            for(Var v : varList) {
+            	if(v.hasValue()) {
+            		constantes.add(v.getValue().toString().replace("\"",""));
+            	}
+            	else {
+            		variables.add(v.getName());
+            	}
+            }
+            
+            //on ajoute les variables en clef de allResult
+            for(String v: variables) {
+            	addKey(v,allResults);
+            }
+            
+            if(constantes.size() == 2) { // deux constantes dans le pattern
+            	int c1 = dico.getValue(constantes.get(0));
+            	int c2 = dico.getValue(constantes.get(1));
 
-            //On récupère les noms de variables
-            Var s = sp.getSubjectVar();
-            Var p = sp.getPredicateVar();
-            Var o = sp.getObjectVar();
-
-            //On les ajoute à notre structure allResults
-            addKey(s, allResults);
-            addKey(p, allResults);
-            addKey(o, allResults);
-
-            int valS, valP, valO;
-            //On regarde si s, p ou o a une valeur = est une constante (pas une variable donc)
-
-            //TODO vérifier que ça marche pour chaque index
-            if (s.hasValue()) { //index sxx
-                valS = dico.getValue(s.getValue().stringValue());
-                if (p.hasValue()) { //index spo
-                    valP = dico.getValue(p.getValue().stringValue());
-                    allResults.get(o.getName()).add(spo.getIndex().get(valS).get(valP));
-                    System.out.println("SPO");
-                } else if (o.hasValue()) { //index sop
-                    valO = dico.getValue(o.getValue().stringValue());
-                    allResults.get(p.getName()).add(sop.getIndex().get(valS).get(valO));
-                    System.out.println("SOP");
-                } else { //TODO à vérifier avec les tailles (si un plus opti que l'autre)
-                    //Cas où ni p ni o n'a de valeur
-                    //On prend SOP par défaut
-                    Set<Integer> keys = sop.getIndex().get((valS)).keySet();
-                    ArrayList<Integer> resO = new ArrayList();
-                    for (int i : keys) {
-                        resO.add(i);
-                        allResults.get(p.getName()).add(sop.getIndex().get((valS)).get(i));
-                    }
-                    allResults.get(o.getName()).add(resO);
-                    System.out.println("S");
+            	allResults.get(variables.get(0)).add(index.getIndex().get(c1).get(c2));	
+            }
+            else if(constantes.size() == 1) { // une constante dans le pattern
+            	int c1 = dico.getValue(constantes.get(0));
+            	
+                Set<Integer> keys = index.getIndex().get(c1).keySet();
+                ArrayList<Integer> resO = new ArrayList();
+                for (int i : keys) {
+                    resO.add(i);
+                    allResults.get(variables.get(1)).add(index.getIndex().get((c1)).get(i));
                 }
-                //TODO les variables n’apparaissaient que dans les sujets et objets (et jamais au
-                //niveau des propriétés).
-            } else if (p.hasValue()) { //index pxx
-                valP = dico.getValue(p.getValue().stringValue());
-                if (s.hasValue()) { //index pso
-                    valS = dico.getValue(s.getValue().stringValue());
-                    allResults.get(o.getName()).add(pso.getIndex().get(valP).get(valS));
-                    System.out.println("PSO");
-                } else if (o.hasValue()) {//index pos
-                    valO = dico.getValue(o.getValue().stringValue());
-                    System.out.println("POS");
-                    allResults.get(s.getName()).add(pos.getIndex().get(valP).get(valO));
-                    //System.out.println(allResults.get(s.getName()));
-                } else {
-                    //Cas où ni s ni o n'a de valeur
-                    //On prend PSO par défaut
-                    Set<Integer> keys = pso.getIndex().get((valP)).keySet();
-                    ArrayList<Integer> resS = new ArrayList();
-                    for (int i : keys) {
-                        resS.add(i);
-                        allResults.get(s.getName()).add(pso.getIndex().get((valP)).get(i));
-                    }
-                    allResults.get(s.getName()).add(resS);
-                    System.out.println("P");
-                }
-            } else if (o.hasValue()) { //on commence par un index oxx
-                valO = dico.getValue(o.getValue().stringValue());
-                if (s.hasValue()) { //index osp
-                    valS = dico.getValue(s.getValue().stringValue());
-                    allResults.get(p.getName()).add(osp.getIndex().get(valO).get(valS));
-                    System.out.println("OSP");
-                } else if (p.hasValue()) { //index ops
-                    valP = dico.getValue(p.getValue().stringValue());
-                    allResults.get(s.getName()).add(ops.getIndex().get(valO).get(valP));
-                    System.out.println("OPS");
-                } else {
-                    //Cas où ni p ni s n'a de valeur
-                    //On prend OSP par défaut
-                    Set<Integer> keys = osp.getIndex().get((valO)).keySet();
-                    ArrayList<Integer> resS = new ArrayList();
-                    for (int i : keys) {
-                        resS.add(i);
-                        allResults.get(s.getName()).add(osp.getIndex().get((valO)).get(i));
-                    }
-                    allResults.get(s.getName()).add(resS);
-                    System.out.println("O");
-                }
-            } else {
+                allResults.get(variables.get(0)).add(resO);
+            }
+            else {
                 //Cas où il y a 3 variables
                 //Choix de base SPO
                 // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
                 // TODO: Vérifier noms de variables
-
+            	
+            	Index spo = this.indexes.get("spo");
                 Set<Integer> keysS = spo.getIndex().keySet();
                 ArrayList<Integer> resS = new ArrayList();
                 ArrayList<Integer> resP = new ArrayList();
@@ -187,14 +162,16 @@ public class Solveur {
 
                     for (int kP : keysP) {
                         resP.add(kP);
-                        allResults.get(s.getName()).add(spo.getIndex().get((kS)).get(kP));
+                        allResults.get(variables.get(2)).add(spo.getIndex().get((kS)).get(kP));
                     }
                 }
-                allResults.get(s.getName()).add(resS);
-                allResults.get(p.getName()).add(resP);
+                allResults.get(variables.get(0)).add(resS);
+                allResults.get(variables.get(1)).add(resP);
                 System.out.println("xxx");
             }
+
         }
+        
 
         //Dans allResults on a les résultats de chaque variable pour chaque pattern
         //Ici on fait pour chaque variable l'intersection des résultats
@@ -202,7 +179,9 @@ public class Solveur {
         HashMap<String, ArrayList<Integer>> results = new HashMap<>();
         ArrayList<Integer> result = new ArrayList<>();
         for(String key: allResults.keySet()){
+        	
             result = allResults.get(key).get(0);
+            
             //System.out.println(allResults.get(key).size()-1);
             //TODO: vérifier la taille
             for(int i = 1; i<allResults.get(key).size()-1;i++){
