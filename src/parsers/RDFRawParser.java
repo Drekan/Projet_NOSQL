@@ -4,12 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.Set;
 
-import moteur.Solveur;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -17,6 +12,8 @@ import org.openrdf.rio.helpers.RDFHandlerBase;
 
 import moteur.Dictionnaire;
 import moteur.Index;
+import moteur.Solveur;
+import moteur.Statistics;
 
 public final class RDFRawParser {
 
@@ -58,8 +55,12 @@ public final class RDFRawParser {
 
 
 	public static void main(String args[]) throws FileNotFoundException {
-
-		Reader reader = new FileReader("datasets/100K.rdfxml");
+		//TODO : paramétrer les attributs suivants
+		String dataPath = "datasets/100K.rdfxml";
+		String queriesPath = "out/production/Projet_NOSQL/queries";
+		String outputPath= "results/";
+		
+		Reader reader = new FileReader(dataPath);
 		org.openrdf.rio.RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
 		
 		System.out.println("Voulez-vous cr�er un dictionnaire tri� ou non ? (y/N)");
@@ -79,7 +80,16 @@ public final class RDFRawParser {
 		indexes.add(new Index("osp"));
 		indexes.add(new Index("ops"));
 
-		Solveur solveur = new Solveur(d, indexes);
+		/*
+		 * 	private String outputPath;
+	private String dataPath;
+	private String queriesPath;
+		 */
+		
+		Statistics stats = new Statistics(outputPath,dataPath,queriesPath);
+		
+		
+		Solveur solveur = new Solveur(d, indexes,stats);
 		RDFListener rdf_l = new RDFListener(d);
 
 		rdfParser.setRDFHandler(rdf_l);
@@ -91,7 +101,8 @@ public final class RDFRawParser {
 			d.createDico();
 			long timeSpent_d = System.nanoTime() - startTime_d;
 			
-
+			stats.setRDFTripleNum(d.getTuples().size());
+			
 			System.out.println("La taille du dictionnaire est de " + d.getSize());
 			System.out.println("Nombre total de ressources lues : " + rdf_l.ressourcesNum);
 
@@ -106,8 +117,15 @@ public final class RDFRawParser {
 				}
 			}
 			long timeSpent_i = System.nanoTime() - startTime_i;
-
-			solveur.traiterQueries();
+			
+			stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
+			
+			long timeSpent_s = System.nanoTime();
+			solveur.traiterQueries(queriesPath,outputPath);
+			timeSpent_s = System.nanoTime() - timeSpent_s;
+			
+			stats.setTotalTime(timeSpent_i+timeSpent_d+timeSpent_s);
+			
 			tuples.clear();		
 
 			System.out.println("Fin du programme.");
@@ -115,7 +133,8 @@ public final class RDFRawParser {
 			System.out.println("\n---Statistiques---");
 			System.out.println("Temps de génération du dictionnaire : " + timeSpent_d/1000000 + "ms");
 			System.out.println("Temps de génération de l'index : " + timeSpent_i/1000000 + "ms");
-			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d)/1000000 + "ms\n");
+			System.out.println("Temps de traitement des requêtes : " + timeSpent_s/1000000 + "ms");
+			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d+timeSpent_s)/1000000 + "ms\n");
 
 
 		} catch (Exception e) {

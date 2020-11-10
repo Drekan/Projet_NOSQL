@@ -14,10 +14,10 @@ public class Solveur {
     //TODO: gérer l'UTF-8
     //TODO: tester avec des requetes avec plus de resultats
 
-    Dictionnaire dico;
+    private Dictionnaire dico;
     
     //on accède aux index par leur type : les clefs sont ["spo","sop",...,"ops"]
-    HashMap<String,Index> indexes;
+    private HashMap<String,Index> indexes;
     
     /* 
      * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
@@ -26,11 +26,15 @@ public class Solveur {
      * 12 <=> p et o ont une valeur connue, on utilise donc un index pos
      * 0 <=> s a une valeur connue, on utilise donc un index spo
      */
-    HashMap<String,String> indexMap;
-
-    public Solveur(Dictionnaire dico, ArrayList<Index> indexes){
+    private HashMap<String,String> indexMap;
+    
+    private Statistics stats;
+//(String dataPath,String queriesPath,String outputPath)
+    public Solveur(Dictionnaire dico, ArrayList<Index> indexes,Statistics stats){
         this.indexes = new HashMap<>();
         this.indexMap = new HashMap<>();
+        this.stats = stats;
+        
     	this.dico = dico;
     	
         for(Index i: indexes){
@@ -48,14 +52,20 @@ public class Solveur {
     }
 
     //TODO file not found ?
-    public void traiterQueries() throws IOException, MalformedQueryException {
+    public void traiterQueries(String queriesPath,String outputPath) throws IOException, MalformedQueryException {
         try {
-            File myObj = new File("out/production/Projet_NOSQL/queries");
+            File myObj = new File(queriesPath);
             Scanner myReader = new Scanner(myObj);
+            int queryCount = 0;
             while (myReader.hasNextLine()) {
+            	queryCount++;
                 String data = myReader.nextLine();
-                solve(data);
+                solve(data,outputPath);
             }
+            
+            this.stats.setQueriesNum(queryCount);
+            
+            //(String req,String dataPath,String queriesPath,String outputPath)
             myReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
@@ -82,7 +92,8 @@ public class Solveur {
     }
 
     //Méthode principale de la classe
-    public void solve(String req) throws MalformedQueryException {
+    // TODO : optimiser les paramètres
+    public void solve(String req,String outputPath) throws MalformedQueryException {
         System.out.println("\nRequete: "+req);
         //Utilisation d'une instance de SPARLQLParser
         SPARQLParser sparqlParser = new SPARQLParser();
@@ -204,7 +215,7 @@ public class Solveur {
 
         for(String s: varToReturn){
         	try {
-                FileWriter myWriter = new FileWriter("results/queryResult.csv");
+                FileWriter myWriter = new FileWriter(outputPath+"queryResult.csv");
                 
                 //TODO : QUELLE STRUCTURRRE POUR LE CSV ??? 
                 myWriter.write(req+"\n");
@@ -216,7 +227,8 @@ public class Solveur {
               }
             System.out.println(s+": "+ printRes(results.get(s)));
         }
-        
+
+        //(String req,String dataPath,String queriesPath,String outputPath)
         
 
         //for(String k: allResults.keySet()){
