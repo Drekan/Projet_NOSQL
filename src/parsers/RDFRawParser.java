@@ -57,7 +57,7 @@ public final class RDFRawParser {
 	public static void main(String args[]) throws FileNotFoundException {
 		//TODO : paramétrer les attributs suivants
 		String dataPath = "datasets/100K.rdfxml";
-		String queriesPath = "out/production/Projet_NOSQL/queries";
+		String queriesPath = "queries.txt";
 		String outputPath= "results/";
 		
 		Reader reader = new FileReader(dataPath);
