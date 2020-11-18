@@ -55,11 +55,11 @@ public final class RDFRawParser {
 
 
 	public static void main(String args[]) throws FileNotFoundException {
-		//TODO : paramétrer les attributs suivants
+		//TODO : normalement il faut utiliser options du solver!
 		String dataPath = "datasets/100K.rdfxml";
 		String queriesPath = "queries.txt";
 		String outputPath= "results/";
-		
+
 		Reader reader = new FileReader(dataPath);
 		org.openrdf.rio.RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
 		
@@ -88,13 +88,14 @@ public final class RDFRawParser {
 		
 		Statistics stats = new Statistics(outputPath,dataPath,queriesPath);
 		
-		
-		Solveur solveur = new Solveur(d, indexes,stats);
+		String options="";
+		Solveur solveur = new Solveur(d, indexes,stats,options);
 		RDFListener rdf_l = new RDFListener(d);
+		String verbose="";
 
 		rdfParser.setRDFHandler(rdf_l);
 		try {
-			System.out.println("Parsing des donn�es...");
+			verbose+="Parsing des donn�es...\n";
 			
 			long startTime_d = System.nanoTime();
 			rdfParser.parse(reader,"");
@@ -103,10 +104,10 @@ public final class RDFRawParser {
 			
 			stats.setRDFTripleNum(d.getTuples().size());
 			
-			System.out.println("La taille du dictionnaire est de " + d.getSize());
-			System.out.println("Nombre total de ressources lues : " + rdf_l.ressourcesNum);
+			verbose+="La taille du dictionnaire est de " + d.getSize()+"\n";
+			verbose+="Nombre total de ressources lues : " + rdf_l.ressourcesNum+"\n";
 
-			System.out.println("Cr�ation des index...");
+			verbose+="Cr�ation des index...";
 			ArrayList<String[]> tuples = d.getTuples();
 			
 			long startTime_i = System.nanoTime();
@@ -121,27 +122,39 @@ public final class RDFRawParser {
 			stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
 			
 			long timeSpent_s = System.nanoTime();
-			solveur.traiterQueries(queriesPath,outputPath);
+			//TODO traitement des options
+			if(solveur.getOptions().getWarmPct()!=0){
+				solveur.warm(solveur.getOptions().getWarmPct());
+			}
+			solveur.traiterQueries();
 			timeSpent_s = System.nanoTime() - timeSpent_s;
-			
-			
-			System.out.println("Appel de JENA : ");
-			long timeSpent_JENA = System.nanoTime();
-			solveur.jenaQueries(queriesPath,dataPath);
-			timeSpent_JENA = System.nanoTime() - timeSpent_JENA;
+
+			String jenaTime="";
+			if(solveur.getOptions().getJena()) {
+				verbose += "Appel de JENA : \n";
+				long timeSpent_JENA = System.nanoTime();
+				solveur.jenaQueries(queriesPath, dataPath);
+				timeSpent_JENA = System.nanoTime() - timeSpent_JENA;
+				jenaTime="Temps total JENA : " + (timeSpent_JENA) / 1000000 + "ms\n";
+				//TODO: je pense qu'il faudrait appeler comparisonJena dans le solveur
+			}
 			
 			stats.setTotalTime(timeSpent_i+timeSpent_d+timeSpent_s);
 			
 			tuples.clear();		
 
-			System.out.println("Fin du programme.");
-			
-			System.out.println("\n---Statistiques---");
-			System.out.println("Temps de génération du dictionnaire : " + timeSpent_d/1000000 + "ms");
-			System.out.println("Temps de génération de l'index : " + timeSpent_i/1000000 + "ms");
-			System.out.println("Temps de traitement des requêtes : " + timeSpent_s/1000000 + "ms");
-			System.out.println("Temps total : " + (timeSpent_i+timeSpent_d+timeSpent_s)/1000000 + "ms");
-			System.out.println("Temps total JENA : " + (timeSpent_JENA)/1000000 + "ms\n");
+			verbose+="Fin du programme. \n";
+
+			verbose+="\n---Statistiques--- \n";
+			verbose+="Temps de génération du dictionnaire : " + timeSpent_d / 1000000 + "ms \n";
+			verbose+="Temps de génération de l'index : " + timeSpent_i / 1000000 + "ms \n";
+			verbose+="Temps de traitement des requêtes : " + timeSpent_s / 1000000 + "ms \n";
+			verbose+="Temps total : " + (timeSpent_i + timeSpent_d + timeSpent_s) / 1000000 + "ms \n";
+			verbose+=jenaTime+"\n";
+
+			if(solveur.getOptions().getVerbose()) {
+				System.out.println(verbose);
+			}
 
 
 		} catch (Exception e) {

@@ -1,5 +1,6 @@
 package moteur;
 
+/*
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -9,8 +10,10 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.util.FileManager;
+ */
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.*;
+
 import org.openrdf.query.algebra.helpers.QueryModelVisitorBase;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.query.parser.ParsedQuery;
@@ -36,10 +39,12 @@ public class Solveur {
      * 0 <=> s a une valeur connue, on utilise donc un index spo
      */
     private HashMap<String,String> indexMap;
+
+    private Options options;
     
     private Statistics stats;
 //(String dataPath,String queriesPath,String outputPath)
-    public Solveur(Dictionnaire dico, ArrayList<Index> indexes,Statistics stats){
+    public Solveur(Dictionnaire dico, ArrayList<Index> indexes,Statistics stats, String options){
         this.indexes = new HashMap<>();
         this.indexMap = new HashMap<>();
         this.stats = stats;
@@ -57,28 +62,61 @@ public class Solveur {
         this.indexMap.put("01","spo");
         this.indexMap.put("02","sop");
         this.indexMap.put("12","pos");
-        
+
+        //TODO: à améliorer ?
+        this.options = new Options();
+        this.options.setOptions(options);
     }
 
     //TODO file not found ?
-    public void traiterQueries(String queriesPath,String outputPath) throws IOException, MalformedQueryException {
-        try {
-            File myObj = new File(queriesPath);
-            Scanner myReader = new Scanner(myObj);
-            int queryCount = 0;
-            while (myReader.hasNextLine()) {
-            	queryCount++;
-                String data = myReader.nextLine();
-                solve(data,outputPath);
+    //TODO: à facto ?
+    public void traiterQueries() throws IOException, MalformedQueryException {
+        //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
+        String queriesPath = this.options.getQueriesPath();
+        String outputPath = this.options.getOutputPath();
+        if(this.options.getShuffle()){
+            try {
+                File myObj = new File(queriesPath);
+                Scanner myReader = new Scanner(myObj);
+                ArrayList<String> queries = new ArrayList<>();
+                while (myReader.hasNextLine()) {
+                    String data = myReader.nextLine();
+                    queries.add(data);
+                }
+
+                Collections.shuffle(queries);
+                for(String s: queries){
+                    solve(s);
+                }
+
+                this.stats.setQueriesNum(queries.size());
+
+                //(String req,String dataPath,String queriesPath,String outputPath)
+                myReader.close();
+            } catch (FileNotFoundException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
             }
-            
-            this.stats.setQueriesNum(queryCount);
-            
-            //(String req,String dataPath,String queriesPath,String outputPath)
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
+        }
+        else {
+            try {
+                File myObj = new File(queriesPath);
+                Scanner myReader = new Scanner(myObj);
+                int queryCount = 0;
+                while (myReader.hasNextLine()) {
+                    queryCount++;
+                    String data = myReader.nextLine();
+                    solve(data);
+                }
+
+                this.stats.setQueriesNum(queryCount);
+
+                //(String req,String dataPath,String queriesPath,String outputPath)
+                myReader.close();
+            } catch (FileNotFoundException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
         }
     }
     
@@ -102,7 +140,8 @@ public class Solveur {
 
     //Méthode principale de la classe
     // TODO : optimiser les paramètres
-    public void solve(String req,String outputPath) throws MalformedQueryException {
+    public void solve(String req) throws MalformedQueryException {
+        String outputPath = this.options.getOutputPath();
         System.out.println("\nRequete: "+req);
         //Utilisation d'une instance de SPARLQLParser
         SPARQLParser sparqlParser = new SPARQLParser();
@@ -187,7 +226,6 @@ public class Solveur {
                 }
                 allResults.get(variables.get(0)).add(resS);
                 allResults.get(variables.get(1)).add(resP);
-                System.out.println("xxx");
             }
 
         }
@@ -249,8 +287,11 @@ public class Solveur {
 
         //TODO: vérifier les résultats des requetes avec JENA
     }
-    
+
+
     public void jenaQueries(String queriesPath,String dataPath) {
+        //TODO: enlever commentaire
+    /*
     	Model model = ModelFactory.createDefaultModel();
 		InputStream in = FileManager.get().open(dataPath);
 		
@@ -275,17 +316,15 @@ public class Solveur {
     			}
 
             }
-            
 
-            
             //(String req,String dataPath,String queriesPath,String outputPath)
             myReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-		
 
+*/
     }
 
     public String printRes(ArrayList<Integer> tab){
@@ -299,6 +338,25 @@ public class Solveur {
     public void checkReq(String toCompare){
         System.out.println(this.dico.getValue(toCompare));
     }
+
+    public Options getOptions(){
+        return this.options;
+    }
+
+    //TODO: peut etre pas très opti
+    //TODO: on compare ici le résultat d'une req de nous au res d'une req de jena
+    //TODO: faire jena unitaire
+    public boolean comparisonJena(String req){
+        //if(solve(req).equals)
+        return false;
+    }
+
+    //TODO
+    public void warm(float pct){
+
+    }
+
+
 }
 
 
