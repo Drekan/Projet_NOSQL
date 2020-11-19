@@ -70,7 +70,8 @@ public class Solveur {
 
     //TODO file not found ?
     //TODO: à facto ?
-    public void traiterQueries() throws IOException, MalformedQueryException {
+    //
+    public void traiterQueries(boolean optimisation) throws IOException, MalformedQueryException {
         //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
         String queriesPath = this.options.getQueriesPath();
         String outputPath = this.options.getOutputPath();
@@ -86,7 +87,12 @@ public class Solveur {
 
                 Collections.shuffle(queries);
                 for(String s: queries){
-                    solve(s);
+                    if(optimisation){
+                        solveOptim(s);
+                    }
+                    else {
+                        solve(s);
+                    }
                 }
 
                 this.stats.setQueriesNum(queries.size());
@@ -106,7 +112,12 @@ public class Solveur {
                 while (myReader.hasNextLine()) {
                     queryCount++;
                     String data = myReader.nextLine();
-                    solve(data);
+                    if(optimisation){
+                        solveOptim(data);
+                    }
+                    else {
+                        solve(data);
+                    }
                 }
 
                 this.stats.setQueriesNum(queryCount);
@@ -136,6 +147,11 @@ public class Solveur {
     		allResults.put(v, new ArrayList<>());
     		//System.out.println(v+" ajoutée à AllResults");
     	}
+    }
+
+    //Solve optimisé
+    public void solveOptim(String req){
+
     }
 
     //Méthode principale de la classe
@@ -260,19 +276,21 @@ public class Solveur {
             }
         });
 
-        for(String s: varToReturn){
-        	try {
-                FileWriter myWriter = new FileWriter(outputPath+"queryResult.csv");
-                
-                //TODO : QUELLE STRUCTURRRE POUR LE CSV ??? 
-                myWriter.write(req+"\n");
-                myWriter.write(s+": "+ printRes(results.get(s))+"\n\n");
-                myWriter.close();
-              } catch (IOException e) {
-                System.out.println("Erreur dans l'écriture du résultat de la requête");
-                e.printStackTrace();
-              }
-            System.out.println(s+": "+ printRes(results.get(s)));
+        if(this.options.getExport_query_results()) {
+            for (String s : varToReturn) {
+                try {
+                    FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv");
+
+                    //TODO : QUELLE STRUCTURRRE POUR LE CSV ???
+                    myWriter.write(req + "\n");
+                    myWriter.write(s + ": " + printRes(results.get(s)) + "\n\n");
+                    myWriter.close();
+                } catch (IOException e) {
+                    System.out.println("Erreur dans l'écriture du résultat de la requête");
+                    e.printStackTrace();
+                }
+                System.out.println(s + ": " + printRes(results.get(s)));
+            }
         }
 
         //(String req,String dataPath,String queriesPath,String outputPath)
@@ -354,6 +372,11 @@ public class Solveur {
     //TODO
     public void warm(float pct){
 
+    }
+
+    //TODO
+    public float selectivity(String pattern){
+        return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
     }
 
 

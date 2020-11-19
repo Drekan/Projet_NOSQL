@@ -7,11 +7,20 @@ public class Index {
 	//TODO statistiques, arborescence
 
 	private String type; //Type de l'index : spo, sop, pso, pos, osp, ops
+	//TODO -> faire aussi sp, so, os, op, po, ps, o, p, s
 	private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index;
+	//sp, so, os, op, po, ps,
+	private HashMap<Integer, HashMap<Integer, Integer>> index2;
+	//o, p, s
+	private HashMap<Integer, Integer> index1;
+
+	//TODO: à vérifier que ce soit utile (selectivity)
+	private int valuesNumber;
 
 	public Index(String t) {
 		this.type = t;
 		this.index = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>();
+		this.valuesNumber = 0;
 	}
 
 	public void addRec(int i1, int i2, int i3) {
@@ -24,13 +33,12 @@ public class Index {
 		}
 		
 		this.index.get(i1).get(i2).add(i3);
-		
-	
 	}
 
 
 	public void add(int s,int p,int o) {
-
+		this.valuesNumber++;
+		buildSelectivityIndexes();
 		switch(this.type) {
 		case "spo":
 			addRec(s,p,o);
@@ -64,7 +72,18 @@ public class Index {
 
 	public String getType(){return this.type;}
 
+	public int getValuesNumber(){return this.valuesNumber;}
+
+	//TODO !!
+	public int patternOccurences(){
+		return 0;
+	}
+	//TODO: utile ?
 	public int size() {
 		return this.index.size();
+	}
+
+	public void buildSelectivityIndexes(){
+
 	}
 }

@@ -80,12 +80,6 @@ public final class RDFRawParser {
 		indexes.add(new Index("osp"));
 		indexes.add(new Index("ops"));
 
-		/*
-		 * 	private String outputPath;
-	private String dataPath;
-	private String queriesPath;
-		 */
-		
 		Statistics stats = new Statistics(outputPath,dataPath,queriesPath);
 		
 		String options="";
@@ -122,11 +116,22 @@ public final class RDFRawParser {
 			stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
 			
 			long timeSpent_s = System.nanoTime();
-			//TODO traitement des options
+
 			if(solveur.getOptions().getWarmPct()!=0){
 				solveur.warm(solveur.getOptions().getWarmPct());
 			}
-			solveur.traiterQueries();
+
+			if(solveur.getOptions().getOptim_none()){
+				solveur.traiterQueries(false);
+			}
+			else{
+				solveur.traiterQueries(true);
+			}
+
+			if(solveur.getOptions().getStar_queries()) {
+				//TODO !!
+			}
+
 			timeSpent_s = System.nanoTime() - timeSpent_s;
 
 			String jenaTime="";
@@ -152,10 +157,13 @@ public final class RDFRawParser {
 			verbose+="Temps total : " + (timeSpent_i + timeSpent_d + timeSpent_s) / 1000000 + "ms \n";
 			verbose+=jenaTime+"\n";
 
+			if(solveur.getOptions().getExport_query_stats()){
+				//writeStatistics
+			}
+
 			if(solveur.getOptions().getVerbose()) {
 				System.out.println(verbose);
 			}
-
 
 		} catch (Exception e) {
 
