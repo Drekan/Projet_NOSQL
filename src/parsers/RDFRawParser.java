@@ -164,6 +164,9 @@ public final class RDFRawParser {
 			if(solveur.getOptions().getVerbose()) {
 				System.out.println(verbose);
 			}
+			System.out.println();
+			System.out.println(indexes.get(0).getType());
+			indexes.get(0).displayNTriples(10);
 
 		} catch (Exception e) {
 
