@@ -102,10 +102,9 @@ public class Options {
         this.star_queries = star_queries;
     }
 
-    public Options(){
-        //TODO to update
-        this.queriesPath="datasets/100K.rdfxml";
-        this.dataPath="queries.txt";
+    public Options(String line){
+        this.queriesPath="queries.txt";
+        this.dataPath="datasets/100K.rdfxml";
         this.outputPath="results/";
         this.verbose=false;
         this.export_query_stats=false;
@@ -115,9 +114,7 @@ public class Options {
         this.warmPct=0;
         this.optim_none=false;
         this.star_queries=false;
-    }
 
-    public void setOptions(String line){
         String[] options = line.split("-");
         for(String opt: options){
             if(opt.contains("queries")){

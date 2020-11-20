@@ -8,6 +8,8 @@ public class Index {
 
 	private String type; //Type de l'index : spo, sop, pso, pos, osp, ops
 	//TODO -> faire aussi sp, so, os, op, po, ps, o, p, s
+
+	//TODO: à renommer index3?
 	private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index;
 	//sp, so, os, op, po, ps,
 	private HashMap<Integer, HashMap<Integer, Integer>> index2;

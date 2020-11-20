@@ -21,7 +21,12 @@ public class Statistics {
 	private int workloadEvaluationTime; //TODO ????
 	private int optimizationTime = 0; //TODO : AQCS ??
 	private long totalTime;
-	
+
+	public Statistics(){
+
+	}
+
+	//on peut pas les mettre par défaut ?
 	public Statistics(String dataPath,String queriesPath,String outputPath) {
 		this.dataPath = dataPath;
 		this.queriesPath = queriesPath;

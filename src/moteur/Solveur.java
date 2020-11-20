@@ -24,37 +24,34 @@ import java.util.*;
 
 public class Solveur {
     //TODO: gérer l'UTF-8
-    //TODO: tester avec des requetes avec plus de resultats
 
-    private Dictionnaire dico;
-    
-    //on accède aux index par leur type : les clefs sont ["spo","sop",...,"ops"]
-    private HashMap<String,Index> indexes;
-    
-    /* 
+    private Dictionnaire dictionnaire;
+
+    private HashMap<String, Index> indexes;
+
+    private Options options;
+
+    private Statistics stats;
+
+    /*
      * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
-     * 
+     *
      * Exemple :
      * 12 <=> p et o ont une valeur connue, on utilise donc un index pos
      * 0 <=> s a une valeur connue, on utilise donc un index spo
      */
     private HashMap<String,String> indexMap;
 
-    private Options options;
-    
-    private Statistics stats;
-//(String dataPath,String queriesPath,String outputPath)
-    public Solveur(Dictionnaire dico, ArrayList<Index> indexes,Statistics stats, String options){
-        this.indexes = new HashMap<>();
+
+    public Solveur(DataStructure dataStructure, Options options){
         this.indexMap = new HashMap<>();
-        this.stats = stats;
-        
-    	this.dico = dico;
-    	
-        for(Index i: indexes){
+        this.options = options;
+        this.dictionnaire = dataStructure.getDico();
+        this.indexes = dataStructure.getIndexes();
+        for(Index i: this.indexes.values()){
             this.indexes.put(i.getType(),i);
         }
-        
+
         this.indexMap.put("","spo"); //cas où pattern = ?x ?p ?y
         this.indexMap.put("0","spo");
         this.indexMap.put("1","pso");
@@ -63,90 +60,74 @@ public class Solveur {
         this.indexMap.put("02","sop");
         this.indexMap.put("12","pos");
 
-        //TODO: à améliorer ?
-        this.options = new Options();
-        this.options.setOptions(options);
+        this.stats = new Statistics();
     }
 
     //TODO file not found ?
     //TODO: à facto ?
-    //
-    public void traiterQueries(boolean optimisation) throws IOException, MalformedQueryException {
+    public void traiterQueries() throws IOException, MalformedQueryException {
         //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
         String queriesPath = this.options.getQueriesPath();
-        String outputPath = this.options.getOutputPath();
-        if(this.options.getShuffle()){
-            try {
-                File myObj = new File(queriesPath);
-                Scanner myReader = new Scanner(myObj);
-                ArrayList<String> queries = new ArrayList<>();
-                while (myReader.hasNextLine()) {
-                    String data = myReader.nextLine();
-                    queries.add(data);
-                }
+        //String outputPath = this.options.getOutputPath();
 
-                Collections.shuffle(queries);
-                for(String s: queries){
-                    if(optimisation){
-                        solveOptim(s);
-                    }
-                    else {
-                        solve(s);
-                    }
-                }
+        boolean optimisation = this.options.getOptim_none();
 
-                this.stats.setQueriesNum(queries.size());
-
-                //(String req,String dataPath,String queriesPath,String outputPath)
-                myReader.close();
-            } catch (FileNotFoundException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
-            }
-        }
-        else {
-            try {
-                File myObj = new File(queriesPath);
-                Scanner myReader = new Scanner(myObj);
-                int queryCount = 0;
-                while (myReader.hasNextLine()) {
-                    queryCount++;
-                    String data = myReader.nextLine();
-                    if(optimisation){
+        try {
+            File myObj = new File(queriesPath);
+            Scanner myReader = new Scanner(myObj);
+            ArrayList<String> queries = new ArrayList<>();
+            int queryCount = 0;
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                if(this.options.getShuffle()){
+                    queryCount++; //TODO à quoi ça sert ?
+                    queries.add(data);}
+                else {
+                    if (optimisation) {
                         solveOptim(data);
-                    }
-                    else {
+                    } else {
                         solve(data);
                     }
                 }
 
-                this.stats.setQueriesNum(queryCount);
-
-                //(String req,String dataPath,String queriesPath,String outputPath)
-                myReader.close();
-            } catch (FileNotFoundException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
             }
+            if(this.options.getShuffle()) {
+                Collections.shuffle(queries);
+                for (String s : queries) {
+                    if (optimisation) {
+                        solveOptim(s);
+                    } else {
+                        solve(s);
+                    }
+                }
+            }
+
+            this.stats.setQueriesNum(queries.size());
+
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
         }
+
     }
-    
+
     public String encodePattern(StatementPattern sp) {
-    	String subject = (sp.getSubjectVar().hasValue()?"0":"");
-    	String predicate = (sp.getPredicateVar().hasValue()?"1":"");
-    	String object = (sp.getObjectVar().hasValue()?"2":"");
-    	
-    	return subject+predicate+object;
+        String subject = (sp.getSubjectVar().hasValue()?"0":"");
+        String predicate = (sp.getPredicateVar().hasValue()?"1":"");
+        String object = (sp.getObjectVar().hasValue()?"2":"");
+
+        return subject+predicate+object;
     }
-    
+
 
     //Ajouter les variables de chaque pattern à notre structure allResults (récupère tous les résultats
     // pour chaque variable, pour chaque pattern)
     public void addKey(String v, HashMap<String, ArrayList<ArrayList<Integer>>> allResults){
-    	if(!allResults.containsKey(v)) {
-    		allResults.put(v, new ArrayList<>());
-    		//System.out.println(v+" ajoutée à AllResults");
-    	}
+        if(!allResults.containsKey(v)) {
+            allResults.put(v, new ArrayList<>());
+            //System.out.println(v+" ajoutée à AllResults");
+        }
     }
 
     //Solve optimisé
@@ -158,7 +139,9 @@ public class Solveur {
     // TODO : optimiser les paramètres
     public void solve(String req) throws MalformedQueryException {
         String outputPath = this.options.getOutputPath();
-        System.out.println("\nRequete: "+req);
+        String verbose ="";
+        verbose+="\nRequete: "+req+"\n";
+
         //Utilisation d'une instance de SPARLQLParser
         SPARQLParser sparqlParser = new SPARQLParser();
         ParsedQuery pq = sparqlParser.parseQuery(req, null);
@@ -169,49 +152,49 @@ public class Solveur {
         //Clé = la valeur recherchée
         //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
 
-        System.out.println("-- Lecture de chaque pattern");
+        verbose+="-- Lecture de chaque pattern"+"\n";
 
         for(StatementPattern sp: patterns) {
-        	
-        	//on encode le pattern
-        	String indexType = this.indexMap.get(this.encodePattern(sp));
-        	Index index = this.indexes.get(indexType);
-        	
-            System.out.println("  Index utilisé: " + indexType);
-            
+
+            //on encode le pattern
+            String indexType = this.indexMap.get(this.encodePattern(sp));
+            Index index = this.indexes.get(indexType);
+
+            verbose+="  Index utilisé: " + indexType+"\n";
+
             //les termes de la requete sont recuperes...
             ArrayList<Var> varList = new ArrayList<>();
             varList.add(sp.getSubjectVar());
             varList.add(sp.getPredicateVar());
             varList.add(sp.getObjectVar());
-            
+
             //...puis separes en constante / variable
             ArrayList<String> variables = new ArrayList<>();
             ArrayList<String> constantes = new ArrayList<>();
-            
+
             for(Var v : varList) {
-            	if(v.hasValue()) {
-            		constantes.add(v.getValue().toString().replace("\"",""));
-            	}
-            	else {
-            		variables.add(v.getName());
-            	}
+                if(v.hasValue()) {
+                    constantes.add(v.getValue().toString().replace("\"",""));
+                }
+                else {
+                    variables.add(v.getName());
+                }
             }
-            
+
             //on ajoute les variables en clef de allResult
             for(String v: variables) {
-            	addKey(v,allResults);
+                addKey(v,allResults);
             }
-            
-            if(constantes.size() == 2) { // deux constantes dans le pattern
-            	int c1 = dico.getValue(constantes.get(0));
-            	int c2 = dico.getValue(constantes.get(1));
 
-            	allResults.get(variables.get(0)).add(index.getIndex().get(c1).get(c2));	
+            if(constantes.size() == 2) { // deux constantes dans le pattern
+                int c1 = this.dictionnaire.getValue(constantes.get(0));
+                int c2 = this.dictionnaire.getValue(constantes.get(1));
+
+                allResults.get(variables.get(0)).add(index.getIndex().get(c1).get(c2));
             }
             else if(constantes.size() == 1) { // une constante dans le pattern
-            	int c1 = dico.getValue(constantes.get(0));
-            	
+                int c1 = this.dictionnaire.getValue(constantes.get(0));
+
                 Set<Integer> keys = index.getIndex().get(c1).keySet();
                 ArrayList<Integer> resO = new ArrayList();
                 for (int i : keys) {
@@ -225,8 +208,8 @@ public class Solveur {
                 //Choix de base SPO
                 // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
                 // TODO: Vérifier noms de variables
-            	
-            	Index spo = this.indexes.get("spo");
+
+                Index spo = this.indexes.get("spo");
                 Set<Integer> keysS = spo.getIndex().keySet();
                 ArrayList<Integer> resS = new ArrayList();
                 ArrayList<Integer> resP = new ArrayList();
@@ -245,7 +228,7 @@ public class Solveur {
             }
 
         }
-        
+
 
         //Dans allResults on a les résultats de chaque variable pour chaque pattern
         //Ici on fait pour chaque variable l'intersection des résultats
@@ -253,9 +236,9 @@ public class Solveur {
         HashMap<String, ArrayList<Integer>> results = new HashMap<>();
         ArrayList<Integer> result = new ArrayList<>();
         for(String key: allResults.keySet()){
-        	
+
             result = allResults.get(key).get(0);
-            
+
             //System.out.println(allResults.get(key).size()-1);
             //TODO: vérifier la taille
             for(int i = 1; i<allResults.get(key).size()-1;i++){
@@ -266,7 +249,7 @@ public class Solveur {
 
         //Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
         ArrayList<String> varToReturn = new ArrayList<>();
-        System.out.println("-- Résultat de la requete");
+        verbose+="-- Résultat de la requete"+"\n";
         pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
             public void meet(Projection projection) {
                 List<ProjectionElem> test = projection.getProjectionElemList().getElements();
@@ -276,8 +259,9 @@ public class Solveur {
             }
         });
 
-        if(this.options.getExport_query_results()) {
-            for (String s : varToReturn) {
+
+        for (String s : varToReturn) {
+            if(this.options.getExport_query_results()) {
                 try {
                     FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv");
 
@@ -289,22 +273,27 @@ public class Solveur {
                     System.out.println("Erreur dans l'écriture du résultat de la requête");
                     e.printStackTrace();
                 }
-                System.out.println(s + ": " + printRes(results.get(s)));
             }
+            verbose+=s + ": " + printRes(results.get(s));
         }
 
-        //(String req,String dataPath,String queriesPath,String outputPath)
-        
 
-        //for(String k: allResults.keySet()){
-         //   System.out.println(k + allResults.get(k).toString());
-            //for(Integer i: results.get) {
-            //System.out.println(k + " ++ " + results.get(k).get(i));
-            //}
-        //}
-
-        //TODO: vérifier les résultats des requetes avec JENA
+    if(this.options.getVerbose()){
+        System.out.println(verbose);
     }
+
+    //(String req,String dataPath,String queriesPath,String outputPath)
+
+
+    //for(String k: allResults.keySet()){
+    //   System.out.println(k + allResults.get(k).toString());
+    //for(Integer i: results.get) {
+    //System.out.println(k + " ++ " + results.get(k).get(i));
+    //}
+    //}
+
+    //TODO: vérifier les résultats des requetes avec JENA
+}
 
 
     public void jenaQueries(String queriesPath,String dataPath) {
@@ -348,13 +337,13 @@ public class Solveur {
     public String printRes(ArrayList<Integer> tab){
         String res = "";
         for(Integer i: tab){
-            res+=this.dico.getValue(i)+" ";
+            res+=this.dictionnaire.getValue(i)+" ";
         }
         return res;
     }
 
     public void checkReq(String toCompare){
-        System.out.println(this.dico.getValue(toCompare));
+        System.out.println(this.dictionnaire.getValue(toCompare));
     }
 
     public Options getOptions(){
@@ -378,7 +367,6 @@ public class Solveur {
     public float selectivity(String pattern){
         return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
     }
-
 
 }
 
