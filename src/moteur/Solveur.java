@@ -65,6 +65,7 @@ public class Solveur {
 
     //TODO file not found ?
     //TODO: à facto ?
+    //TODO: star queries 
     public void traiterQueries() throws IOException, MalformedQueryException {
         //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
         String queriesPath = this.options.getQueriesPath();

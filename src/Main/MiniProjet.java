@@ -31,10 +31,17 @@ public class MiniProjet {
 
         dataStructure.createIndexes();
 
+        if(options.getExport_query_stats()){
+
+        }
+
         //III. Partie solveur
         Solveur solveur = new Solveur(dataStructure, options);
+        //warm
         solveur.traiterQueries();
 
+        //Ecrire les stats de datastructure mais aussi du solveur
+        //
     }
 
 }
