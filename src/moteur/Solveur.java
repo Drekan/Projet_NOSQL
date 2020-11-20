@@ -364,9 +364,10 @@ public class Solveur {
 
     }
 
-    //TODO
+    //TODO : (patternOccurences n'existe plus)
     public float selectivity(String pattern){
-        return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
+       // return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
+    	return 0;
     }
 
 }

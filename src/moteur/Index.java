@@ -20,6 +20,9 @@ public class Index {
 	public Index(String t) {
 		this.type = t;
 		this.index = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>();
+		this.index1 = new HashMap<>();
+		this.index2 = new HashMap<>();
+		
 		this.valuesNumber = 0;
 	}
 
