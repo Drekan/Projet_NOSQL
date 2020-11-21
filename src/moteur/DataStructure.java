@@ -19,12 +19,12 @@ public class DataStructure {
     private Statistics stats;
     private Options opt;
 
-    public DataStructure(Options options) {
+    public DataStructure(Options options,Statistics stat) {
         this.opt = options;
 
-        this.stats = new Statistics(opt.getDataPath(),opt.getQueriesPath(),opt.getOutputPath());
-
         this.indexes = new HashMap<>();
+        
+        this.stats = stat;
     }
 
     public Dictionnaire getDico() {

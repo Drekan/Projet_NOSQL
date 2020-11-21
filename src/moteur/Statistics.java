@@ -33,6 +33,12 @@ public class Statistics {
 		this.outputPath = outputPath;
 	}
 	
+	public Statistics(Options opt) {
+		this.dataPath = opt.getDataPath();
+		this.queriesPath = opt.getQueriesPath();
+		this.outputPath = opt.getOutputPath();
+	}
+	
 	
 	
 	//---Getters & Setters---

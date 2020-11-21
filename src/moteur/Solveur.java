@@ -43,7 +43,7 @@ public class Solveur {
     private HashMap<String,String> indexMap;
 
 
-    public Solveur(DataStructure dataStructure, Options options){
+    public Solveur(DataStructure dataStructure, Options options, Statistics stats){
         this.indexMap = new HashMap<>();
         this.options = options;
         this.dictionnaire = dataStructure.getDico();
@@ -60,7 +60,7 @@ public class Solveur {
         this.indexMap.put("02","sop");
         this.indexMap.put("12","pos");
 
-        this.stats = new Statistics();
+        this.stats = stats;
     }
 
     //TODO file not found ?

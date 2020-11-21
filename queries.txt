@@ -1,3 +1,1 @@
-SELECT ?x WHERE{ ?x <http://purl.org/stuff/rev#title> "Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius" .?x <http://purl.org/stuff/rev#rating> "9"}
-SELECT ?x WHERE{?x <http://schema.org/telephone> "7740777" . ?x <http://db.uwaterloo.ca/~galuc/wsdbm/gender> <http://db.uwaterloo.ca/~galuc/wsdbm/Gender0>}
-SELECT ?x WHERE{?x <http://db.uwaterloo.ca/~galuc/wsdbm/follows> <http://db.uwaterloo.ca/~galuc/wsdbm/User335> . ?x <http://xmlns.com/foaf/age> <http://db.uwaterloo.ca/~galuc/wsdbm/AgeGroup4> .?x <http://db.uwaterloo.ca/~galuc/wsdbm/likes> <http://db.uwaterloo.ca/~galuc/wsdbm/Product82>}
+SELECT * WHERE {  ?v0 <http://xmlns.com/foaf/homepage> <http://db.uwaterloo.ca/~galuc/wsdbm/Website294> .  ?v0 <http://ogp.me/ns#title> ?v2 .  ?v0 <http://schema.org/contentRating> ?v3 .  }
