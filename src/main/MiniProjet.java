@@ -37,11 +37,16 @@ public class MiniProjet {
 
         //III. Partie solveur
         Solveur solveur = new Solveur(dataStructure, options);
-        //warm
         solveur.traiterQueries();
 
-        //Ecrire les stats de datastructure mais aussi du solveur
-        //
+
+        //pas sure que 2 stats se soit ok
+
+        //A faire dans les classes
+        if(options.getExport_query_stats()){
+            dataStructure.getStats().writeStats();
+            solveur.getStats().writeStats();
+        }
     }
 
 }

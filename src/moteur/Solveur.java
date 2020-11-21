@@ -21,6 +21,7 @@ import org.openrdf.query.parser.sparql.SPARQLParser;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Solveur {
     //TODO: gérer l'UTF-8
@@ -63,16 +64,41 @@ public class Solveur {
         this.stats = new Statistics();
     }
 
-    //TODO file not found ?
+    public Statistics getStats(){
+        return  this.stats;
+    }
+
+    //Appelé si shuffle ou warm
+    public ArrayList<String> buildQueriesAL() {
+        String queriesPath = this.options.getQueriesPath();
+
+        try {
+            File myObj = new File(queriesPath);
+            Scanner myReader = new Scanner(myObj);
+            ArrayList<String> queries = new ArrayList<>();
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                if (this.options.getShuffle()) {
+                    queries.add(data);
+                }
+            }
+            return queries;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+        //TODO file not found ?
     //TODO: à facto ?
     //TODO: star queries 
-    public void traiterQueries() throws IOException, MalformedQueryException {
-        //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
+    public void traiterQueries() throws MalformedQueryException {
         String queriesPath = this.options.getQueriesPath();
-        //String outputPath = this.options.getOutputPath();
 
         boolean optimisation = this.options.getOptim_none();
 
+        //TODO: UTILISER METHODE BUILDAL ?
         try {
             File myObj = new File(queriesPath);
             Scanner myReader = new Scanner(myObj);
@@ -90,8 +116,8 @@ public class Solveur {
                         solve(data);
                     }
                 }
-
             }
+
             if(this.options.getShuffle()) {
                 Collections.shuffle(queries);
                 for (String s : queries) {
@@ -104,6 +130,7 @@ public class Solveur {
             }
 
             this.stats.setQueriesNum(queries.size());
+            //TODO: write stats ?
 
             myReader.close();
         } catch (FileNotFoundException e) {
@@ -132,13 +159,44 @@ public class Solveur {
     }
 
     //Solve optimisé
-    public void solveOptim(String req){
+    public void solveOptim(String req) throws MalformedQueryException {
+        if(options.getWarmPct()!=0){
+            this.warm(options.getWarmPct());
+        }
+
+        String outputPath = this.options.getOutputPath();
+        String verbose ="";
+        verbose+="\nRequete: "+req+"\n";
+
+        //Utilisation d'une instance de SPARLQLParser
+        SPARQLParser sparqlParser = new SPARQLParser();
+        ParsedQuery pq = sparqlParser.parseQuery(req, null);
+        List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
+
+        //TODO: utile dans solveOptim ?!
+        HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>();
+        // Cette structure permet d'obtenir tous les résultats pour toutes les variables pour tous les patterns
+        //Clé = la valeur recherchée
+        //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
+
+        verbose+="-- Lecture de chaque pattern"+"\n";
+
+        HashMap<StatementPattern, Float> selectivities = new HashMap<>();
+        for(StatementPattern sp: patterns) {
+            selectivities.put(sp,selectivity(sp));
+        }
+        //Il faut trier cet HM par ordre de selectivité croissant
+        //Le plus faible est celui fait en premier
+
 
     }
 
     //Méthode principale de la classe
     // TODO : optimiser les paramètres
     public void solve(String req) throws MalformedQueryException {
+        if(options.getWarmPct()!=0){
+            this.warm(options.getWarmPct());
+        }
         String outputPath = this.options.getOutputPath();
         String verbose ="";
         verbose+="\nRequete: "+req+"\n";
@@ -259,6 +317,7 @@ public class Solveur {
                 }
             }
         });
+        //TODO: vérifier les résultats des requetes avec JENA --> how
 
 
         for (String s : varToReturn) {
@@ -279,22 +338,10 @@ public class Solveur {
         }
 
 
-    if(this.options.getVerbose()){
-        System.out.println(verbose);
+        if(this.options.getVerbose()){
+            System.out.println(verbose);
+        }
     }
-
-    //(String req,String dataPath,String queriesPath,String outputPath)
-
-
-    //for(String k: allResults.keySet()){
-    //   System.out.println(k + allResults.get(k).toString());
-    //for(Integer i: results.get) {
-    //System.out.println(k + " ++ " + results.get(k).get(i));
-    //}
-    //}
-
-    //TODO: vérifier les résultats des requetes avec JENA
-}
 
 
     public void jenaQueries(String queriesPath,String dataPath) {
@@ -351,22 +398,77 @@ public class Solveur {
         return this.options;
     }
 
-    //TODO: peut etre pas très opti
+
     //TODO: on compare ici le résultat d'une req de nous au res d'une req de jena
-    //TODO: faire jena unitaire
     public boolean comparisonJena(String req){
-        //if(solve(req).equals)
+        /*
+        Model model = ModelFactory.createDefaultModel();
+        InputStream in = FileManager.get().open(dataPath);
+
+        model.read(in, null,"RDF/XML");
+
+        Query query = QueryFactory.create(req);
+        QueryExecution qexec = QueryExecutionFactory.create(query,model);
+        try {
+            ResultSet rs = qexec.execSelect();
+            System.out.println("Query : "+req);
+            ResultSetFormatter.out(System.out, rs, query);
+            System.out.println();
+
+        } finally {
+            qexec.close();
+        }*/
         return false;
-    }
-
-    //TODO
-    public void warm(float pct){
 
     }
 
+    public void warm(float pct) throws MalformedQueryException {
+        ArrayList<String> queries = buildQueriesAL();
+        Float queriesToExec=queries.size()*pct;
+
+        ArrayList<Integer> generated = new ArrayList<>();
+        for(int i=0; i<queriesToExec;i++){
+            Random r = new Random();
+            int c = r.nextInt(queries.size());
+            while(generated.contains(c)){
+                c = r.nextInt(queries.size());
+            }
+            generated.add(c);
+            this.solve(queries.get(c));
+        }
+    }
+
+
     //TODO
-    public float selectivity(String pattern){
-        return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
+    public float selectivity(StatementPattern sp){
+        //Il faut récupérer la valeur dans l'index
+        //les termes de la requete sont recuperes...
+        ArrayList<Var> varList = new ArrayList<>();
+        varList.add(sp.getSubjectVar());
+        varList.add(sp.getPredicateVar());
+        varList.add(sp.getObjectVar());
+
+        //...puis separes en constante / variable
+        ArrayList<String> variables = new ArrayList<>();
+        ArrayList<String> constantes = new ArrayList<>();
+
+        for(Var v : varList) {
+            if(v.hasValue()) {
+                constantes.add(v.getValue().toString().replace("\"",""));
+            }
+            else {
+                variables.add(v.getName());
+            }
+        }
+        if(constantes.size()==2){
+            //return this.indexes.get ;
+            //this.indexes.get("sop").getValuesNumber();
+        }
+
+        if(constantes.size()==1){
+
+        }
+        return 0;
     }
 
 }
