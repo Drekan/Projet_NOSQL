@@ -142,7 +142,8 @@ public class Options {
                 this.setShuffle(true);
             }
             if(opt.contains("warm")){
-                //TODO: à améliorer ?
+                //TODO: à vérifier que ça marche bien
+                this.setWarmPct(Float.parseFloat(opt.split("\\s+")[1]));
             }
             if(opt.equals("optim_none")){
                 this.setOptim_none(true);
