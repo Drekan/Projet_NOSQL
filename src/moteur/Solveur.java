@@ -11,6 +11,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.util.FileManager;
  */
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.util.FileManager;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.*;
 
@@ -21,9 +25,11 @@ import org.openrdf.query.parser.sparql.SPARQLParser;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Solveur {
     //TODO: gérer l'UTF-8
+    //TODO: merge join
 
     private Dictionnaire dictionnaire;
 
@@ -63,16 +69,42 @@ public class Solveur {
         this.stats = stats;
     }
 
+    public Statistics getStats(){
+        return  this.stats;
+    }
+
+    //Appelé si shuffle ou warm
+    public ArrayList<String> buildQueriesAL() {
+        String queriesPath = this.options.getQueriesPath();
+
+        try {
+            File myObj = new File(queriesPath);
+            Scanner myReader = new Scanner(myObj);
+            ArrayList<String> queries = new ArrayList<>();
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                if (this.options.getShuffle()) {
+                    queries.add(data);
+                }
+            }
+            return queries;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     //TODO file not found ?
     //TODO: à facto ?
     //TODO: star queries 
-    public void traiterQueries() throws IOException, MalformedQueryException {
-        //TODO: on est d'accord, ça vaut pas le coup de mettre tout dans une collection si pas trié ? ou non ?
+    public void traiterQueries() throws MalformedQueryException {
         String queriesPath = this.options.getQueriesPath();
-        //String outputPath = this.options.getOutputPath();
 
-        boolean optimisation = this.options.getOptim_none();
+        boolean optim_none = this.options.getOptim_none();
 
+        //TODO: UTILISER METHODE BUILDAL ?
+        //TODO: vérifier que la req  est en étoile
         try {
             File myObj = new File(queriesPath);
             Scanner myReader = new Scanner(myObj);
@@ -84,18 +116,18 @@ public class Solveur {
                     queryCount++; //TODO à quoi ça sert ?
                     queries.add(data);}
                 else {
-                    if (optimisation) {
+                    if (!optim_none) {
                         solveOptim(data);
                     } else {
                         solve(data);
                     }
                 }
-
             }
+
             if(this.options.getShuffle()) {
                 Collections.shuffle(queries);
                 for (String s : queries) {
-                    if (optimisation) {
+                    if (!optim_none) {
                         solveOptim(s);
                     } else {
                         solve(s);
@@ -104,6 +136,7 @@ public class Solveur {
             }
 
             this.stats.setQueriesNum(queries.size());
+            //TODO: write stats ?
 
             myReader.close();
         } catch (FileNotFoundException e) {
@@ -132,13 +165,58 @@ public class Solveur {
     }
 
     //Solve optimisé
-    public void solveOptim(String req){
+    public void solveOptim(String req) throws MalformedQueryException {
+        if(options.getWarmPct()!=0){
+            this.warm(options.getWarmPct());
+        }
+
+        String outputPath = this.options.getOutputPath();
+        String verbose ="";
+        verbose+="\nRequete: "+req+"\n";
+
+        //Utilisation d'une instance de SPARLQLParser
+        SPARQLParser sparqlParser = new SPARQLParser();
+        ParsedQuery pq = sparqlParser.parseQuery(req, null);
+        List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
+
+        //TODO: utile dans solveOptim ?!
+        HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>();
+        // Cette structure permet d'obtenir tous les résultats pour toutes les variables pour tous les patterns
+        //Clé = la valeur recherchée
+        //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
+
+        verbose+="-- Lecture de chaque pattern"+"\n";
+
+        HashMap<StatementPattern, Double> selectivities = new HashMap<>();
+        for(StatementPattern sp: patterns) {
+            selectivities.put(sp,selectivity(sp));
+        }
+        ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
+        while(alreadySolved.size()<patterns.size()){
+            StatementPattern spCurrent = minSelectivity(alreadySolved,selectivities);
+            //BIG TODO
+        }
+
 
     }
 
+    public StatementPattern minSelectivity(ArrayList<StatementPattern> alreadySolved, HashMap<StatementPattern, Double> selectivities){
+        StatementPattern minSp = new StatementPattern();
+        long minS = 1;
+        for(StatementPattern sp: selectivities.keySet()){
+            if(selectivities.get(sp)<minS && !alreadySolved.contains(sp)){
+                alreadySolved.add(sp);
+                return minSp;
+            }
+        }
+        return minSp;
+    }
     //Méthode principale de la classe
     // TODO : optimiser les paramètres
     public void solve(String req) throws MalformedQueryException {
+        if(options.getWarmPct()!=0){
+            this.warm(options.getWarmPct());
+        }
         String outputPath = this.options.getOutputPath();
         String verbose ="";
         verbose+="\nRequete: "+req+"\n";
@@ -260,8 +338,24 @@ public class Solveur {
             }
         });
 
+        System.out.println("----------------");
+        for (String s : varToReturn) {
+            System.out.println(printRes(results.get(s)));
+
+        }
+
+        //TODO: vérifier les résultats des requetes avec JENA --> how
+
+        //TODO: vérifier si , ou ;
+        String CSVResults="";
+        for (String s : varToReturn) {
+            CSVResults+=s+",";
+        }
+        CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+        CSVResults+="\n";
 
         for (String s : varToReturn) {
+            CSVResults+=printRes(results.get(s))+",";
             if(this.options.getExport_query_results()) {
                 try {
                     FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv");
@@ -278,28 +372,35 @@ public class Solveur {
             verbose+=s + ": " + printRes(results.get(s));
         }
 
+        CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+        CSVResults += "\n";
+        if(this.options.getJena()) {
+            String[] jena = jenaSolve(req).split("\n");
+            String[] ourResult = CSVResults.split("\n");
 
-    if(this.options.getVerbose()){
-        System.out.println(verbose);
+            System.out.println("L1"+jena[0].contains(ourResult[0]));
+            System.out.println(jena[0].length()+"--"+ourResult[0].length());
+            System.out.println("L2"+jena[1].contains(ourResult[1]));
+            System.out.println(jena[1].length()+"--"+ourResult[1].length());
+
+            /*
+            System.out.println("$$$"+CSVResults+"$$$");
+            if (jenaSolve(req).contains(CSVResults)) { //TODO WARNING
+                System.out.println("Jena-True");
+            }
+            else {
+                System.out.println("Jena-False");
+            }
+             */
+        }
+
+        if(this.options.getVerbose()){
+            System.out.println(verbose);
+        }
     }
-
-    //(String req,String dataPath,String queriesPath,String outputPath)
-
-
-    //for(String k: allResults.keySet()){
-    //   System.out.println(k + allResults.get(k).toString());
-    //for(Integer i: results.get) {
-    //System.out.println(k + " ++ " + results.get(k).get(i));
-    //}
-    //}
-
-    //TODO: vérifier les résultats des requetes avec JENA
-}
 
 
     public void jenaQueries(String queriesPath,String dataPath) {
-        //TODO: enlever commentaire
-    /*
     	Model model = ModelFactory.createDefaultModel();
 		InputStream in = FileManager.get().open(dataPath);
 		
@@ -331,8 +432,6 @@ public class Solveur {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-
-*/
     }
 
     public String printRes(ArrayList<Integer> tab){
@@ -351,23 +450,125 @@ public class Solveur {
         return this.options;
     }
 
-    //TODO: peut etre pas très opti
+
+
     //TODO: on compare ici le résultat d'une req de nous au res d'une req de jena
-    //TODO: faire jena unitaire
-    public boolean comparisonJena(String req){
-        //if(solve(req).equals)
-        return false;
+    public String jenaSolve(String req){
+        Model model = ModelFactory.createDefaultModel();
+        InputStream in = FileManager.get().open(this.options.getDataPath());
+
+        model.read(in, null,"RDF/XML");
+
+        Query query = QueryFactory.create(req);
+        QueryExecution qexec = QueryExecutionFactory.create(query,model);
+        try {
+            ResultSet rs = qexec.execSelect();
+            System.out.println("Query : "+req);
+            //ResultSetFormatter.out(System.out, rs, query);
+
+
+            OutputStream output = new OutputStream() {
+                private StringBuilder string = new StringBuilder();
+
+                @Override
+                public void write(int b) throws IOException {
+                    this.string.append((char) b );
+                }
+
+                //Netbeans IDE automatically overrides this toString()
+                public String toString() {
+                    return this.string.toString();
+                }
+            };
+            ResultSetFormatter.outputAsCSV(output,rs);
+            System.out.println("["+output.toString()+"]");
+            return output.toString();
+        } finally {
+            qexec.close();
+        }
     }
+
+    public void warm(float pct) throws MalformedQueryException {
+        ArrayList<String> queries = buildQueriesAL();
+        Float queriesToExec=queries.size()*pct;
+
+        ArrayList<Integer> generated = new ArrayList<>();
+        for(int i=0; i<queriesToExec;i++){
+            Random r = new Random();
+            int c = r.nextInt(queries.size());
+            while(generated.contains(c)){
+                c = r.nextInt(queries.size());
+            }
+            generated.add(c);
+            this.solve(queries.get(c));
+        }
+    }
+
 
     //TODO
-    public void warm(float pct){
+    public double selectivity(StatementPattern sp) {
+        //Il faut récupérer la valeur dans l'index
+        //les termes de la requete sont recuperes...
+        ArrayList<Var> varList = new ArrayList<>();
+        Var s = sp.getSubjectVar();
+        Var p = sp.getPredicateVar();
+        Var o = sp.getObjectVar();
 
+        varList.add(s);
+        varList.add(s);
+        varList.add(o);
+
+        //...puis separes en constante / variable
+        ArrayList<String> variables = new ArrayList<>();
+        ArrayList<String> constantes = new ArrayList<>();
+
+        for (Var v : varList) {
+            if (v.hasValue()) {
+                constantes.add(v.getValue().toString().replace("\"", ""));
+            } else {
+                variables.add(v.getName());
+            }
+        }
+
+        String indexType = this.indexMap.get(this.encodePattern(sp));
+
+        String i1 = indexType.substring(0,1);
+
+        String i2 = indexType.substring(1,2);
+        System.out.println(indexType+"->"+i1+"_"+i2);
+
+        System.out.println("___"+this.indexes.get("spo").getValuesNumber());
+        if (constantes.size() == 2) {
+            System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
+            return this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
+        }
+
+        if (constantes.size() == 1) {
+            //System.out.println(this.indexes.get(i1));
+            System.out.println(this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)));
+            return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
+        }
+        return 0;
     }
 
-    //TODO : (patternOccurences n'existe plus)
-    public float selectivity(String pattern){
-       // return this.indexes.get("sop").patternOccurences()/this.indexes.get("sop").getValuesNumber();
-    	return 0;
+
+    public int returnConvertCst(String i, Var s, Var p, Var o){
+        System.out.println("---"+i);
+        String res = "";
+        if(i.equals("p")){
+            res = p.getValue().stringValue();
+        }
+        else if (i.equals("o")){
+            res = o.getValue().stringValue();
+        }
+        else if (i.equals("s")){
+            res = s.getValue().stringValue();
+        }
+        else{
+            res = "";
+        }
+        System.out.println(res);
+        return this.dictionnaire.getValue(res);
     }
 
 }

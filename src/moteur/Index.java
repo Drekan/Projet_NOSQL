@@ -15,15 +15,23 @@ public class Index {
 	//o, p, s
 	private HashMap<Integer, Integer> index1;
 
-	private int valuesNumber; //TODO: à comparer avec la taille du dictionnaire
+	private Integer valuesNumber; //TODO: à comparer avec la taille du dictionnaire
 
 	public Index(String t) {
 		this.type = t;
 		this.index = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>();
 		this.index1 = new HashMap<>();
 		this.index2 = new HashMap<>();
-		
+
 		this.valuesNumber = 0;
+	}
+
+	public HashMap<Integer, HashMap<Integer, Integer>> getIndex2(){
+		return index2;
+	}
+
+	public HashMap<Integer, Integer> getIndex1(){
+		return index1;
 	}
 
 	public void addRec(int i1, int i2, int i3) {
@@ -89,11 +97,15 @@ public class Index {
 
 	public String getType(){return this.type;}
 
-	public int getValuesNumber(){return this.valuesNumber;}
+	public Integer getValuesNumber(){return this.valuesNumber;}
 
 	//TODO: utile ?
 	public int size() {
 		return this.index.size();
+	}
+
+	public int getvaluesNumber(){
+		return this.valuesNumber;
 	}
 	
 	public void displayNTriples(int n) { //display the first n triples

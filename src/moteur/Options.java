@@ -10,7 +10,7 @@ public class Options {
     Boolean jena;
     Boolean shuffle;
     float warmPct;
-    Boolean optim_none;
+    Boolean optim_none; //TODO: vaut true si pas d'optimisation donc utilisation de
     Boolean star_queries;
 
     public String getQueriesPath() {
@@ -142,7 +142,8 @@ public class Options {
                 this.setShuffle(true);
             }
             if(opt.contains("warm")){
-                //TODO: à améliorer ?
+                //TODO: à vérifier que ça marche bien
+                this.setWarmPct(Float.parseFloat(opt.split("\\s+")[1]));
             }
             if(opt.equals("optim_none")){
                 this.setOptim_none(true);

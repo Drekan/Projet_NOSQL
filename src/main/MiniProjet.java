@@ -22,9 +22,14 @@ public class MiniProjet {
 
         //activation du mode verbose
         options.setVerbose(true);
+        
+        //à commenter
         options.setDataPath("datasets/1M.rdfxml.rdf");
         
         Statistics statistiques = new Statistics(options);
+
+        options.setJena(true);
+
 
 
         //II. Définition des DataStructure
@@ -40,11 +45,18 @@ public class MiniProjet {
 
         //III. Partie solveur
         Solveur solveur = new Solveur(dataStructure, options, statistiques);
-        //warm
+
+
         solveur.traiterQueries();
 
-        //Ecrire les stats de datastructure mais aussi du solveur
-        //
+
+        //pas sure que 2 stats se soit ok
+
+        //A faire dans les classes
+        if(options.getExport_query_stats()){
+            dataStructure.getStats().writeStats();
+            solveur.getStats().writeStats();
+        }
     }
 
 }
