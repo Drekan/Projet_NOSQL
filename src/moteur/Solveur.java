@@ -440,7 +440,7 @@ public class Solveur {
 
 
     //TODO
-    public float selectivity(StatementPattern sp){
+    public float selectivity(StatementPattern sp) {
         //Il faut récupérer la valeur dans l'index
         //les termes de la requete sont recuperes...
         ArrayList<Var> varList = new ArrayList<>();
@@ -452,20 +452,19 @@ public class Solveur {
         ArrayList<String> variables = new ArrayList<>();
         ArrayList<String> constantes = new ArrayList<>();
 
-        for(Var v : varList) {
-            if(v.hasValue()) {
-                constantes.add(v.getValue().toString().replace("\"",""));
-            }
-            else {
+        for (Var v : varList) {
+            if (v.hasValue()) {
+                constantes.add(v.getValue().toString().replace("\"", ""));
+            } else {
                 variables.add(v.getName());
             }
         }
-        if(constantes.size()==2){
+        if (constantes.size() == 2) {
             //return this.indexes.get ;
             //this.indexes.get("sop").getValuesNumber();
         }
 
-        if(constantes.size()==1){
+        if (constantes.size() == 1) {
 
         }
         return 0;
