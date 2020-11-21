@@ -22,6 +22,7 @@ public class MiniProjet {
 
         //activation du mode verbose
         options.setVerbose(true);
+        options.setJena(true);
 
 
         //II. Définition des DataStructure

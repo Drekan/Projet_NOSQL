@@ -11,6 +11,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.util.FileManager;
  */
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.util.FileManager;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.*;
 
@@ -317,10 +321,25 @@ public class Solveur {
                 }
             }
         });
+
+        System.out.println("----------------");
+        for (String s : varToReturn) {
+            System.out.println(printRes(results.get(s)));
+
+        }
+
         //TODO: vérifier les résultats des requetes avec JENA --> how
 
+        //TODO: vérifier si , ou ;
+        String CSVResults="";
+        for (String s : varToReturn) {
+            CSVResults+=s+",";
+        }
+        CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+        CSVResults+="\n";
 
         for (String s : varToReturn) {
+            CSVResults+=printRes(results.get(s))+",";
             if(this.options.getExport_query_results()) {
                 try {
                     FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv");
@@ -337,6 +356,27 @@ public class Solveur {
             verbose+=s + ": " + printRes(results.get(s));
         }
 
+        CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+        CSVResults += "\n";
+        if(this.options.getJena()) {
+            String[] jena = jenaSolve(req).split("\n");
+            String[] ourResult = CSVResults.split("\n");
+
+            System.out.println("L1"+jena[0].contains(ourResult[0]));
+            System.out.println(jena[0].length()+"--"+ourResult[0].length());
+            System.out.println("L2"+jena[1].contains(ourResult[1]));
+            System.out.println(jena[1].length()+"--"+ourResult[1].length());
+
+            /*
+            System.out.println("$$$"+CSVResults+"$$$");
+            if (jenaSolve(req).contains(CSVResults)) { //TODO WARNING
+                System.out.println("Jena-True");
+            }
+            else {
+                System.out.println("Jena-False");
+            }
+             */
+        }
 
         if(this.options.getVerbose()){
             System.out.println(verbose);
@@ -345,8 +385,6 @@ public class Solveur {
 
 
     public void jenaQueries(String queriesPath,String dataPath) {
-        //TODO: enlever commentaire
-    /*
     	Model model = ModelFactory.createDefaultModel();
 		InputStream in = FileManager.get().open(dataPath);
 		
@@ -378,8 +416,6 @@ public class Solveur {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-
-*/
     }
 
     public String printRes(ArrayList<Integer> tab){
@@ -399,11 +435,11 @@ public class Solveur {
     }
 
 
+
     //TODO: on compare ici le résultat d'une req de nous au res d'une req de jena
-    public boolean comparisonJena(String req){
-        /*
+    public String jenaSolve(String req){
         Model model = ModelFactory.createDefaultModel();
-        InputStream in = FileManager.get().open(dataPath);
+        InputStream in = FileManager.get().open(this.options.getDataPath());
 
         model.read(in, null,"RDF/XML");
 
@@ -412,14 +448,28 @@ public class Solveur {
         try {
             ResultSet rs = qexec.execSelect();
             System.out.println("Query : "+req);
-            ResultSetFormatter.out(System.out, rs, query);
-            System.out.println();
+            //ResultSetFormatter.out(System.out, rs, query);
 
+
+            OutputStream output = new OutputStream() {
+                private StringBuilder string = new StringBuilder();
+
+                @Override
+                public void write(int b) throws IOException {
+                    this.string.append((char) b );
+                }
+
+                //Netbeans IDE automatically overrides this toString()
+                public String toString() {
+                    return this.string.toString();
+                }
+            };
+            ResultSetFormatter.outputAsCSV(output,rs);
+            System.out.println("["+output.toString()+"]");
+            return output.toString();
         } finally {
             qexec.close();
-        }*/
-        return false;
-
+        }
     }
 
     public void warm(float pct) throws MalformedQueryException {
