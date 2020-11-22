@@ -2,6 +2,8 @@ package moteur;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.jena.shared.NotFoundException;
+
 public class Dictionnaire {
 	//TODO: mettre en cache ?
 
@@ -70,12 +72,17 @@ public class Dictionnaire {
 	}
 
 	public String getValue(int index) {
-		return this.intToString_dico.get(index);
+		if(this.intToString_dico.containsKey(index))
+			return this.intToString_dico.get(index);
+		else
+			throw new NotFoundException("String Dictionnaire.getValue (int)");
 	}
 
 	public int getValue(String value) {
-		//System.out.println("Value demandée : " + value);
-		return this.stringToInt_dico.get(value);
+		if(this.stringToInt_dico.containsKey(value))
+			return this.stringToInt_dico.get(value);
+		else
+			throw new NotFoundException("Int Dictionnaire.getValue (String)");
 	}
 
 	public String[] getTuple(int i) {
