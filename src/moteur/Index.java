@@ -44,8 +44,10 @@ public class Index {
 		if(!this.index.get(i1).containsKey(i2))
 			this.index.get(i1).put(i2,new ArrayList<>());
 		
-		if(!this.index.get(i1).get(i2).contains(i3))
+		if(!this.index.get(i1).get(i2).contains(i3)) {
 			this.index.get(i1).get(i2).add(i3);
+			this.valuesNumber++;
+		}
 
 		
 		if(!this.index2.containsKey(i1))
@@ -64,7 +66,6 @@ public class Index {
 
 
 	public void add(int s,int p,int o) {
-		this.valuesNumber++;
 		switch(this.type) {
 		case "spo":
 			addRec(s,p,o);
