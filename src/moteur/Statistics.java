@@ -1,17 +1,14 @@
 package moteur;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 public class Statistics {
 	private String outputPath;
 	private String dataPath;
 	private String queriesPath;
-	
-	
+
+
 	private int RDFTripleNum;
 	private int queriesNum;
 	private int queriesReadTime; //TODO ???
@@ -32,15 +29,15 @@ public class Statistics {
 		this.queriesPath = queriesPath;
 		this.outputPath = outputPath;
 	}
-	
+
 	public Statistics(Options opt) {
 		this.dataPath = opt.getDataPath();
 		this.queriesPath = opt.getQueriesPath();
 		this.outputPath = opt.getOutputPath();
 	}
-	
-	
-	
+
+
+
 	//---Getters & Setters---
 
 	public int getRDFTripleNum() {
@@ -133,11 +130,11 @@ public class Statistics {
 
 	public void writeStats() {
 		try {
-		 FileWriter myWriter = new FileWriter(outputPath+"queryStat.csv");
-          myWriter.write(
-	        		  dataPath+","+
-	        		  queriesPath+","+
-	        				  
+			FileWriter myWriter = new FileWriter(outputPath+"queryStat.csv");
+			myWriter.write(
+					dataPath+","+
+							queriesPath+","+
+
 	        		  RDFTripleNum+","+
 	        		  queriesNum+","+
 	        		  queriesNum+","+
@@ -148,13 +145,13 @@ public class Statistics {
 	        		  workloadEvaluationTime+","+
 	        		  optimizationTime+","+
 	        		  totalTime+","
-        		  );
-          
-          myWriter.close();
-        } catch (IOException e) {
-          System.out.println("Erreur dans l'écriture du résultat de la requête");
-          e.printStackTrace();
-        }
+					);
+
+			myWriter.close();
+		} catch (IOException e) {
+			System.out.println("Erreur dans l'écriture du résultat de la requête");
+			e.printStackTrace();
+		}
 	}
-	
+
 }

@@ -1,16 +1,11 @@
 package parsers;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
 
-import moteur.*;
 import org.openrdf.model.Statement;
 import org.openrdf.query.MalformedQueryException;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.RDFHandlerBase;
+
+import moteur.Dictionnaire;
 
 public final class RDFRawParser {
 
@@ -29,22 +24,22 @@ public final class RDFRawParser {
 			String subject = st.getSubject().toString();
 			String predicate = st.getPredicate().toString();
 			String object = st.getObject().toString();
-				
+
 			if(subject.startsWith("\"")) {
 				subject = subject.substring(1,subject.length()-1);
 				System.out.println(subject);
 			}
-			
+
 			if(predicate.startsWith("\"")) {
 				predicate = predicate.substring(1,predicate.length()-1);
-				
+
 			}
-			
+
 			if(object.startsWith("\"")) {
 				object = object.substring(1,object.length()-1);
-				
+
 			}
-			
+
 			this.ressourcesNum+=3;
 			this.dico.add(subject,predicate,object);
 		}
@@ -60,7 +55,7 @@ public final class RDFRawParser {
 		//String queriesPath = "queries.txt";
 		//String outputPath= "results/";
 
-		
+
 		Solveur solveur = new Solveur(d, indexes,stats,optionsLine);
 
 
@@ -90,9 +85,9 @@ public final class RDFRawParser {
 				jenaTime="Temps total JENA : " + (timeSpent_JENA) / 1000000 + "ms\n";
 				//TODO: je pense qu'il faudrait appeler comparisonJena dans le solveur
 			}
-			
+
 			stats.setTotalTime(timeSpent_i+timeSpent_d+timeSpent_s);
-			
+
 			tuples.clear();		
 
 			verbose+="Fin du programme. \n";
@@ -113,7 +108,7 @@ public final class RDFRawParser {
 			System.out.println(indexes.get(0).getType());
 			indexes.get(0).displayNTriples(10);
 
-*/
+		 */
 	}
 
 
