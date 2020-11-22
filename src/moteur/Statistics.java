@@ -8,34 +8,22 @@ public class Statistics {
 	private String dataPath;
 	private String queriesPath;
 
-
 	private int RDFTripleNum;
 	private int queriesNum;
-	private int queriesReadTime; //TODO ???
+	private int queriesReadTime;
 	private int dicCreationTime;
-	private int indexesNum = 6; //TODO : demander à quoi ça sert
+	private int indexesNum = 6; //TODO : demander à quoi ça sert -- faut il compter aussi les index2 et index1?
 	private int indexesCreationTotalTime;
-	private int workloadEvaluationTime; //TODO ????
+	private int workloadEvaluationTime;
 	private int optimizationTime = 0; //TODO : AQCS ??
 	private long totalTime;
 
-	public Statistics(){
-
-	}
-
-	//on peut pas les mettre par défaut ?
-	public Statistics(String dataPath,String queriesPath,String outputPath) {
-		this.dataPath = dataPath;
-		this.queriesPath = queriesPath;
-		this.outputPath = outputPath;
-	}
 
 	public Statistics(Options opt) {
 		this.dataPath = opt.getDataPath();
 		this.queriesPath = opt.getQueriesPath();
 		this.outputPath = opt.getOutputPath();
 	}
-
 
 
 	//---Getters & Setters---
@@ -60,9 +48,7 @@ public class Statistics {
 		return queriesReadTime;
 	}
 
-	public void setQueriesReadTime(int queriesReadTime) {
-		this.queriesReadTime = queriesReadTime;
-	}
+	public void setQueriesReadTime(int queriesReadTime) { this.queriesReadTime = queriesReadTime; }
 
 	public int getDicCreationTime() {
 		return dicCreationTime;

@@ -10,18 +10,22 @@ import moteur.Statistics;
 
 public class MiniProjet {
 
+    //TODO: gérer l'UTF-8
+
 	public static void main(String[] args) throws IOException, MalformedQueryException {
+        System.setProperty( "file.encoding", "UTF-8" ); //TODO: ça marche ?
+        long startTime_i = System.nanoTime();
 		String optionsLine = ""; // TODO: à supprimer et remplacer par args
 		//I. Définition des options
 		Options options = new Options(optionsLine);
 
 		//activation du mode verbose
 		options.setVerbose(true);
-		
+
         options.setJena(true);
         
         //à commenter
-        options.setOptim_none(true);
+        //options.setOptim_none(true);
 
 		//à commenter
 		//options.setDataPath("datasets/1M.rdfxml.rdf");
@@ -30,16 +34,12 @@ public class MiniProjet {
 
 		options.setJena(true);
 
-		//à commenter
-		//options.setOptim_none(true);
-
-
 		//II. Définition des DataStructure
-		DataStructure dataStructure = new DataStructure(options,statistiques);
+		DataStructure dataStructure = new DataStructure(options);
 
-		dataStructure.createDico(false);
+		dataStructure.createDico(false,statistiques);
 
-		dataStructure.createIndexes();
+		dataStructure.createIndexes(statistiques);
 
 		if(options.getExport_query_stats()){
 
@@ -48,17 +48,11 @@ public class MiniProjet {
 		//III. Partie solveur
 		Solveur solveur = new Solveur(dataStructure, options, statistiques);
 
+		//TODO: à améliorer
+        long timeSpent_i = System.nanoTime() - startTime_i;
+		solveur.traiterQueries((int)timeSpent_i/1000000);
 
-		solveur.traiterQueries();
 
-
-		//pas sure que 2 stats se soit ok
-
-		//A faire dans les classes
-		if(options.getExport_query_stats()){
-			dataStructure.getStats().writeStats();
-			solveur.getStats().writeStats();
-		}
 	}
 
 }

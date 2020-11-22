@@ -1,6 +1,5 @@
 package moteur;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,16 +13,12 @@ import parsers.RDFRawParser.RDFListener;
 public class DataStructure {
 	private Dictionnaire dico;
 	private HashMap<String,Index> indexes;
-
-	private Statistics stats;
 	private Options opt;
 
-	public DataStructure(Options options,Statistics stat) {
+	public DataStructure(Options options) {
 		this.opt = options;
 
 		this.indexes = new HashMap<>();
-
-		this.stats = stat;
 	}
 
 	public Dictionnaire getDico() {
@@ -34,17 +29,13 @@ public class DataStructure {
 		return indexes;
 	}
 
-	public Statistics getStats() {
-		return stats;
-	}
-
 	public Options getOpt() {
 		return opt;
 	}
 
+	public void createDico(Boolean triLexicographique, Statistics stats){
+        long startTime_d = System.nanoTime();
 
-	//TODO : mieux gérer FileNotFoundException
-	public void createDico(Boolean triLexicographique) throws FileNotFoundException{
 		this.dico = new Dictionnaire(triLexicographique);
 
 		String verbose = "";
@@ -55,10 +46,8 @@ public class DataStructure {
 
 		try {
 			verbose+="Parsing des donn�es...\n";
-			long startTime_d = System.nanoTime();
 			rdfParser.parse(new FileReader(opt.getDataPath()),"");
 			this.dico.createDico();
-			long timeSpent_d = System.nanoTime() - startTime_d;
 
 			stats.setRDFTripleNum(dico.getTuples().size());
 
@@ -69,14 +58,17 @@ public class DataStructure {
 				System.out.println(verbose);
 			}
 
-
 		} catch (Exception e) {
 
 		}
+        long timeSpent_d = System.nanoTime() - startTime_d;
+		stats.setDicCreationTime((int)timeSpent_d/1000000);
 	}
 
-	public void createIndexes() {
-		String verbose = "";
+	public void createIndexes(Statistics stats) { //TODO: verbose
+        long startTime_i = System.nanoTime();
+
+        String verbose = "";
 
 		this.indexes.put("spo",new Index("spo"));
 		this.indexes.put("sop",new Index("sop"));
@@ -88,7 +80,6 @@ public class DataStructure {
 		ArrayList<String[]> tuples = this.dico.getTuples();
 
 		verbose+="Cr�ation des index...";
-		long startTime_i = System.nanoTime();
 		for(Index index : indexes.values()) {
 			for(int i=0;i<tuples.size();i++) {
 				index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));
@@ -100,7 +91,6 @@ public class DataStructure {
 		stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
 
 		tuples.clear();
-
 	}
 
 }
