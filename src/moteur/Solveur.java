@@ -175,13 +175,15 @@ public class Solveur {
 			variables.add(sp.getSubjectVar().getName());
 		}
 		
-		if(!sp.getObjectVar().hasValue()) {
-			variables.add(sp.getObjectVar().getName());
-		}
 		
 		if(!sp.getPredicateVar().hasValue()) {
 			variables.add(sp.getPredicateVar().getName());
 		}
+		
+		if(!sp.getObjectVar().hasValue()) {
+			variables.add(sp.getObjectVar().getName());
+		}
+
 		
     	return variables;
     }
@@ -192,13 +194,13 @@ public class Solveur {
 		if(sp.getSubjectVar().hasValue()) {
 			constantes.add(sp.getSubjectVar().getValue().toString().replace("\"",""));
 		}
-
-		if(sp.getObjectVar().hasValue()) {
-			constantes.add(sp.getObjectVar().getValue().toString().replace("\"",""));
-		}
 		
 		if(sp.getPredicateVar().hasValue()) {
 			constantes.add(sp.getPredicateVar().getValue().toString().replace("\"",""));
+		}
+		
+		if(sp.getObjectVar().hasValue()) {
+			constantes.add(sp.getObjectVar().getValue().toString().replace("\"",""));
 		}
 		
     	return constantes;
@@ -313,7 +315,7 @@ public class Solveur {
             if(constantes.size() == 2) { // deux constantes dans le pattern
                 int c1 = this.dictionnaire.getValue(constantes.get(0));
                 int c2 = this.dictionnaire.getValue(constantes.get(1));
-                
+
                 allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
             }
             else if(constantes.size() == 1) { // une constante dans le pattern
