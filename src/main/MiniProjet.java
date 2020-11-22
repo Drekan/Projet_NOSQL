@@ -32,8 +32,6 @@ public class MiniProjet {
 
 		Statistics statistiques = new Statistics(options);
 
-		options.setJena(true);
-
 		//II. Définition des DataStructure
 		DataStructure dataStructure = new DataStructure(options);
 

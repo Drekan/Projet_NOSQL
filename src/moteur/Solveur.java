@@ -185,6 +185,24 @@ public class Solveur {
 		
     	return variables;
     }
+    
+    public ArrayList<String> getConstantes(StatementPattern sp) throws MalformedQueryException{
+    	ArrayList<String> constantes = new ArrayList<>();
+    	
+		if(sp.getSubjectVar().hasValue()) {
+			constantes.add(sp.getSubjectVar().getValue().toString().replace("\"",""));
+		}
+
+		if(sp.getObjectVar().hasValue()) {
+			constantes.add(sp.getObjectVar().getValue().toString().replace("\"",""));
+		}
+		
+		if(sp.getPredicateVar().hasValue()) {
+			constantes.add(sp.getPredicateVar().getValue().toString().replace("\"",""));
+		}
+		
+    	return constantes;
+    }
 
     public ArrayList<String> getStarVariables(String req) throws MalformedQueryException {
     	//les patterns sont récupérés
@@ -197,7 +215,6 @@ public class Solveur {
     	for(StatementPattern sp : patterns) {
     		starVariables.retainAll(getVariables(sp));
     	}
-    	
     	
         return starVariables;
     }
@@ -271,9 +288,7 @@ public class Solveur {
         //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
 
         verbose+="-- Lecture de chaque pattern"+"\n";
-
-        ArrayList<String> constantes = new ArrayList<>();
-        ArrayList<String> variables = new ArrayList<>();
+        
         ArrayList<String> allVariable = new ArrayList<>();
         for(StatementPattern sp: patterns) {
             allResults.put(sp,new HashMap<>());
@@ -284,35 +299,8 @@ public class Solveur {
 
             verbose+="  Index utilisé: " + indexType+"\n";
 
-            //TODO: Supprimer doublon?
-            //les termes de la requete sont recuperes...
-            /*
-            ArrayList<Var> varList = new ArrayList<>();
-            varList.add(sp.getSubjectVar());
-            varList.add(sp.getPredicateVar());
-            varList.add(sp.getObjectVar());
-
-            //...puis separes en constante / variable
-            ArrayList<String> variables = new ArrayList<>();
-            ArrayList<String> constantes = new ArrayList<>();
-
-            for(Var v : varList) {
-                if(v.hasValue()) {
-                    constantes.add(v.getValue().toString().replace("\"",""));
-                }
-                else {
-                    variables.add(v.getName());
-                }
-            }
-
-
-            if (starVariable.isEmpty()) {
-                starVariable = (ArrayList<String>) variables.clone();
-            } else {
-                starVariable.retainAll(variables);
-            }
-             */
-
+            ArrayList<String> variables = getVariables(sp);
+            ArrayList<String> constantes = getConstantes(sp);
 
             //on ajoute les variables dans la hashmap du pattern actuel
             for(String v: variables) {
@@ -325,7 +313,7 @@ public class Solveur {
             if(constantes.size() == 2) { // deux constantes dans le pattern
                 int c1 = this.dictionnaire.getValue(constantes.get(0));
                 int c2 = this.dictionnaire.getValue(constantes.get(1));
-
+                
                 allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
             }
             else if(constantes.size() == 1) { // une constante dans le pattern
