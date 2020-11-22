@@ -3,7 +3,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Dictionnaire {
-
 	//TODO: mettre en cache ?
 
 	private ArrayList<String[]> tuples; //Donn�es non tri�es sous forme de tuples pour cr�er les index

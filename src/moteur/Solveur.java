@@ -47,8 +47,6 @@ import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.query.parser.sparql.SPARQLParser;
 
 public class Solveur {
-    //TODO: gérer l'UTF-8
-    //TODO: merge join
 
     private Dictionnaire dictionnaire;
 
@@ -93,19 +91,20 @@ public class Solveur {
     }
 
     //Appelé si shuffle ou warm
+    //Adapter pour plusieurs fichiers
     public ArrayList<String> buildQueriesAL() {
         String queriesPath = this.options.getQueriesPath();
-
         try {
+            long startTime_i = System.nanoTime();
             File myObj = new File(queriesPath);
             Scanner myReader = new Scanner(myObj);
             ArrayList<String> queries = new ArrayList<>();
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
-                if (this.options.getShuffle()) {
-                    queries.add(data);
-                }
+                queries.add(data);
             }
+            long timeSpent_i = System.nanoTime() - startTime_i;
+            this.stats.setQueriesReadTime((int)timeSpent_i/1000000);
             return queries;
 
         } catch (FileNotFoundException e) {
@@ -116,53 +115,49 @@ public class Solveur {
 
     //TODO file not found ?
     //TODO: à facto ?
-    //TODO: star queries
-    public void traiterQueries() throws MalformedQueryException {
-        String queriesPath = this.options.getQueriesPath();
-
+    public void traiterQueries(long timeSpent) throws MalformedQueryException {
+        ArrayList<String> queries = buildQueriesAL();
         boolean optim_none = this.options.getOptim_none();
 
-        //TODO: UTILISER METHODE BUILDAL ?
-        //TODO: vérifier que la req  est en étoile
-        try {
-            File myObj = new File(queriesPath);
-            Scanner myReader = new Scanner(myObj);
-            ArrayList<String> queries = new ArrayList<>();
-            int queryCount = 0;
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                if(this.options.getShuffle()){
-                    queryCount++; //TODO à quoi ça sert ?
-                    queries.add(data);}
-                else {
-                    if (!optim_none) {
-                        solveOptim(data);
-                    } else {
-                        solve(data);
-                    }
-                }
-            }
-
-            if(this.options.getShuffle()) {
-                Collections.shuffle(queries);
-                for (String s : queries) {
-                    if (!optim_none) {
-                        solveOptim(s);
-                    } else {
-                        solve(s);
-                    }
-                }
-            }
-
-            this.stats.setQueriesNum(queries.size());
-            //TODO: write stats ?
-
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
+        if(options.getWarmPct()!=0){
+            //TODO pbm
+            //this.warm(options.getWarmPct(),queries,optim_none);
         }
 
+        if(this.options.getShuffle()) {
+            //TODO: affichage ?
+            Collections.shuffle(queries);
+        }
+
+        long startTime_i = System.nanoTime();
+
+        for(String query: queries) {
+            System.out.println("CC");
+            //TODO: vérifier que la req  est en étoile
+            ArrayList<String> starVariables = getStarVariables(query);
+            if(starVariables.size()==0) {
+                if (!optim_none) {
+                    System.out.println("OPTIM");
+                    solveOptim(query);
+                } else {
+                    System.out.println("NAIVE");
+                    solve(query);
+                }
+            }
+            else{
+                System.out.println("STAR QUERY");
+                solveStarQuery(query,starVariables);
+            }
+        }
+        long timeSpent_i = System.nanoTime() - startTime_i;
+        //TODO: on a pas pris en compte le warm ou quoi ?
+        this.stats.setWorkloadEvaluationTime((int)timeSpent_i/1000000);
+        this.stats.setQueriesNum(queries.size());
+        this.stats.setTotalTime((int)timeSpent_i/1000000+(int)timeSpent/1000000); //TODO: mettre dans des variables pour que ce soit joli ?
+
+        if(options.getExport_query_stats()){
+            this.stats.writeStats();
+        }
     }
 
     public String encodePattern(StatementPattern sp) {
@@ -173,13 +168,18 @@ public class Solveur {
         return subject+predicate+object;
     }
 
+    public ArrayList<String> getStarVariables(String req) throws MalformedQueryException {
+        return null;
+    }
+
+
+    public void solve(String req){
+
+    }
 
     //Solve optimisé
     public void solveOptim(String req) throws MalformedQueryException {
-        if(options.getWarmPct()!=0){
-            this.warm(options.getWarmPct());
-        }
-
+        //TODO: merge join
         String outputPath = this.options.getOutputPath();
         String verbose ="";
         verbose+="\nRequete: "+req+"\n";
@@ -190,7 +190,7 @@ public class Solveur {
         List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
 
         //TODO: utile dans solveOptim ?!
-        HashMap<String, ArrayList<ArrayList<Integer>>> allResults = new HashMap<>();
+        HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
         // Cette structure permet d'obtenir tous les résultats pour toutes les variables pour tous les patterns
         //Clé = la valeur recherchée
         //Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
@@ -202,12 +202,12 @@ public class Solveur {
             selectivities.put(sp,selectivity(sp));
         }
         ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
-        while(alreadySolved.size()<patterns.size()){
-            StatementPattern spCurrent = minSelectivity(alreadySolved,selectivities);
-            //BIG TODO
+        ArrayList<String> allVariable = new ArrayList<>();
+        while(alreadySolved.size()<patterns.size()) {
+            StatementPattern spCurrent = minSelectivity(alreadySolved, selectivities);
+            //test(spCurrent, allResults, verbose, allVariable, starVariable);
         }
-
-
+        //TODO: optimization time
     }
 
     public StatementPattern minSelectivity(ArrayList<StatementPattern> alreadySolved, HashMap<StatementPattern, Double> selectivities){
@@ -225,10 +225,7 @@ public class Solveur {
 
     //Méthode principale de la classe
     // TODO : optimiser les paramètres
-    public void solve(String req) throws MalformedQueryException {
-        if(options.getWarmPct()!=0){
-            this.warm(options.getWarmPct());
-        }
+    public void solveStarQuery(String req, ArrayList<String> starVariables) throws MalformedQueryException {
         String outputPath = this.options.getOutputPath();
         String verbose ="";
         verbose+="\nRequete: "+req+"\n";
@@ -245,8 +242,9 @@ public class Solveur {
 
         verbose+="-- Lecture de chaque pattern"+"\n";
 
+        ArrayList<String> constantes = new ArrayList<>();
+        ArrayList<String> variables = new ArrayList<>();
         ArrayList<String> allVariable = new ArrayList<>();
-        ArrayList<String> starVariable = new ArrayList<>();
         for(StatementPattern sp: patterns) {
             allResults.put(sp,new HashMap<>());
 
@@ -256,7 +254,9 @@ public class Solveur {
 
             verbose+="  Index utilisé: " + indexType+"\n";
 
+            //TODO: Supprimer doublon?
             //les termes de la requete sont recuperes...
+            /*
             ArrayList<Var> varList = new ArrayList<>();
             varList.add(sp.getSubjectVar());
             varList.add(sp.getPredicateVar());
@@ -275,12 +275,14 @@ public class Solveur {
                 }
             }
 
-            if(starVariable.isEmpty()) {
-                starVariable = (ArrayList<String>)variables.clone();
-            }
-            else {
+
+            if (starVariable.isEmpty()) {
+                starVariable = (ArrayList<String>) variables.clone();
+            } else {
                 starVariable.retainAll(variables);
             }
+             */
+
 
             //on ajoute les variables dans la hashmap du pattern actuel
             for(String v: variables) {
@@ -311,6 +313,7 @@ public class Solveur {
             else {
                 //Cas où il y a 3 variables
                 //Choix de base SPO
+                //TODO: normalement n'arrive jamais alors on enlève ?
                 // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
                 // TODO: Vérifier noms de variables
 
@@ -326,17 +329,15 @@ public class Solveur {
                     }
                 }
             }
-
         }
 
         //avoir la variable qui apparait dans chaque pattern
 
 
-
         //Dans allResults on a les résultats de chaque variable pour chaque pattern
         //Ici on fait pour chaque variable l'intersection des résultats
         //Ca nous permet d'obtenir pour chaque variable l'ensemble des résultas
-        ArrayList<ArrayList<String>> results = this.extractResults(starVariable.get(0), allResults);
+        ArrayList<ArrayList<String>> results = this.extractResults(starVariables.get(0), allResults);
 
 
         //Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
@@ -633,8 +634,7 @@ public class Solveur {
         }
     }
 
-    public void warm(float pct) throws MalformedQueryException {
-        ArrayList<String> queries = buildQueriesAL();
+    public void warm(float pct, ArrayList<String> queries, boolean optim_none, ArrayList<String> starVariables) throws MalformedQueryException {
         Float queriesToExec=queries.size()*pct;
 
         ArrayList<Integer> generated = new ArrayList<>();
@@ -645,7 +645,20 @@ public class Solveur {
                 c = r.nextInt(queries.size());
             }
             generated.add(c);
-            this.solve(queries.get(c));
+
+            if(starVariables.size()==0) {
+                if (!optim_none) {
+                    System.out.println("OPTIM");
+                    solveOptim(queries.get(c));
+                } else {
+                    System.out.println("NAIVE");
+                    solve(queries.get(c));
+                }
+            }
+            else{
+                //TODO pbm
+                //solveStarQuery(queries.get(c));
+            }
         }
     }
 
@@ -660,7 +673,7 @@ public class Solveur {
         Var o = sp.getObjectVar();
 
         varList.add(s);
-        varList.add(s);
+        varList.add(p);
         varList.add(o);
 
         //...puis separes en constante / variable
@@ -682,23 +695,27 @@ public class Solveur {
         String i2 = indexType.substring(1,2);
         System.out.println(indexType+"->"+i1+"_"+i2);
 
-        System.out.println("___"+this.indexes.get("spo").getValuesNumber());
+        //System.out.println("___"+this.indexes.get("spo").getValuesNumber());
         if (constantes.size() == 2) {
             System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
             return this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
         }
 
         if (constantes.size() == 1) {
-            //System.out.println(this.indexes.get(i1));
             System.out.println(this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)));
             return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
         }
+
+        for(String var:variables){
+            System.out.println(var);
+        }
+        System.out.println("NOT GOOD "+constantes.size());
         return 0;
     }
 
 
     public int returnConvertCst(String i, Var s, Var p, Var o){
-        System.out.println("---"+i);
+        //System.out.println("---"+i);
         String res = "";
         if(i.equals("p")){
             res = p.getValue().stringValue();
@@ -714,6 +731,92 @@ public class Solveur {
         }
         System.out.println(res);
         return this.dictionnaire.getValue(res);
+    }
+
+
+
+    public void test(StatementPattern sp,HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults, String verbose, ArrayList<String> allVariable, ArrayList<String> starVariable){
+        allResults.put(sp,new HashMap<>());
+
+        System.out.println("$$$ "+sp);
+        //on encode le pattern pour savoir quel index utiliser
+        String indexType = this.indexMap.get(this.encodePattern(sp));
+
+        Index index = this.indexes.get(indexType);
+
+        verbose+="  Index utilisé: " + indexType+"\n";
+
+        //les termes de la requete sont recuperes...
+        ArrayList<Var> varList = new ArrayList<>();
+        varList.add(sp.getSubjectVar());
+        varList.add(sp.getPredicateVar());
+        varList.add(sp.getObjectVar());
+
+        //...puis separes en constante / variable
+        ArrayList<String> variables = new ArrayList<>();
+        ArrayList<String> constantes = new ArrayList<>();
+
+        for(Var v : varList) {
+            if(v.hasValue()) {
+                constantes.add(v.getValue().toString().replace("\"",""));
+            }
+            else {
+                variables.add(v.getName());
+            }
+        }
+
+        if(starVariable.isEmpty()) {
+            starVariable = (ArrayList<String>)variables.clone();
+        }
+        else {
+            starVariable.retainAll(variables);
+        }
+
+        //on ajoute les variables dans la hashmap du pattern actuel
+        for(String v: variables) {
+            if(!allVariable.contains(v)) {
+                allVariable.add(v);
+            }
+            allResults.get(sp).put(v,new ArrayList<>());
+        }
+
+        if(constantes.size() == 2) { // deux constantes dans le pattern
+            int c1 = this.dictionnaire.getValue(constantes.get(0));
+            int c2 = this.dictionnaire.getValue(constantes.get(1));
+
+            allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
+        }
+        else if(constantes.size() == 1) { // une constante dans le pattern
+            int c1 = this.dictionnaire.getValue(constantes.get(0));
+
+            Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
+            ArrayList<Integer> resO = new ArrayList();
+            for (int i : keys_c1) {
+                for(int j : index.getIndex().get(c1).get(i)) {
+                    allResults.get(sp).get(variables.get(0)).add(i);
+                    allResults.get(sp).get(variables.get(1)).add(j);
+                }
+            }
+        }
+        else {
+            //Cas où il y a 3 variables
+            //Choix de base SPO
+            //TODO: normalement n'arrive jamais alors on enlève ?
+            // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
+            // TODO: Vérifier noms de variables
+
+            Index spo = this.indexes.get("spo");
+
+            for(int s : spo.getIndex().keySet()) {
+                for(int p : spo.getIndex().get(s).keySet()) {
+                    for(int o : spo.getIndex().get(s).get(p)) {
+                        allResults.get(sp).get(variables.get(0)).add(s);
+                        allResults.get(sp).get(variables.get(1)).add(p);
+                        allResults.get(sp).get(variables.get(2)).add(o);
+                    }
+                }
+            }
+        }
     }
 
 }
