@@ -23,13 +23,16 @@ public class MiniProjet {
         //activation du mode verbose
         options.setVerbose(true);
         
+        
         //à commenter
-        options.setDataPath("datasets/1M.rdfxml.rdf");
+        //options.setDataPath("datasets/1M.rdfxml.rdf");
         
         Statistics statistiques = new Statistics(options);
 
-        options.setJena(true);
-
+        //options.setJena(true);
+        
+        //à commenter
+        options.setOptim_none(true);
 
 
         //II. Définition des DataStructure
@@ -46,9 +49,9 @@ public class MiniProjet {
         //III. Partie solveur
         Solveur solveur = new Solveur(dataStructure, options, statistiques);
 
-
+        
         solveur.traiterQueries();
-
+        
 
         //pas sure que 2 stats se soit ok
 
