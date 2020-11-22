@@ -38,30 +38,28 @@ public class Index {
 	}
 
 	public void addRec(int i1, int i2, int i3) {
-		if(!this.index.containsKey(i1)){
+		if(!this.index.containsKey(i1))
 			this.index.put(i1,new HashMap<>());
-		}
-
-		if(!this.index.get(i1).containsKey(i2)){
+		
+		if(!this.index.get(i1).containsKey(i2))
 			this.index.get(i1).put(i2,new ArrayList<>());
-		}
+		
+		if(!this.index.get(i1).get(i2).contains(i3))
+			this.index.get(i1).get(i2).add(i3);
 
-		this.index.get(i1).get(i2).add(i3);
-
-		if(!this.index2.containsKey(i1)){
+		
+		if(!this.index2.containsKey(i1))
 			this.index2.put(i1,new HashMap<>());
-		}
 
-		if(!this.index2.get(i1).containsKey(i2)){
+		if(!this.index2.get(i1).containsKey(i2))
 			this.index2.get(i1).put(i2,0);
-		}
+
 		this.index2.get(i1).put(i2, this.index2.get(i1).get(i2)+1);
 
-		if(!this.index1.containsKey(i1)){
+		if(!this.index1.containsKey(i1))
 			this.index1.put(i1,0);
-		}
+		
 		this.index1.put(i1, this.index1.get(i1)+1);
-
 	}
 
 
