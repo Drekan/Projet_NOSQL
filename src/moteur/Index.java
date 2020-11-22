@@ -1,7 +1,10 @@
 package moteur;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Index {
 	//TODO statistiques, arborescence
@@ -9,7 +12,7 @@ public class Index {
 	private String type; //Type de l'index : spo, sop, pso, pos, osp, ops
 	//TODO -> faire aussi sp, so, os, op, po, ps, o, p, s
 
-	private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index;
+	private Map<Integer, Map<Integer, ArrayList<Integer>>> index;
 	//sp, so, os, op, po, ps,
 	private HashMap<Integer, HashMap<Integer, Integer>> index2;
 	//o, p, s
@@ -19,7 +22,7 @@ public class Index {
 
 	public Index(String t) {
 		this.type = t;
-		this.index = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>();
+		this.index = new HashMap<Integer, Map<Integer, ArrayList<Integer>>>();
 		this.index1 = new HashMap<>();
 		this.index2 = new HashMap<>();
 
@@ -91,7 +94,7 @@ public class Index {
 		}
 	}
 
-	public HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> getIndex() {
+	public Map<Integer, Map<Integer, ArrayList<Integer>>> getIndex() {
 		return index;
 	}
 
@@ -122,8 +125,42 @@ public class Index {
 					System.out.println("["+k1+","+k2+","+k3+"]");
 					countdown--;
 				}
-
 			}
 		}
 	}
+
+
+	public void sortIndex() {
+		//Création du nouvel index
+		Map<Integer, Map<Integer, ArrayList<Integer>>> sortIndex = new TreeMap<Integer, Map<Integer, ArrayList<Integer>>>();
+		for(Integer key1 : index.keySet()) {
+			//Sort des sous HashMap
+			Map<Integer, ArrayList<Integer>> sortSousIndex = new TreeMap<Integer, ArrayList<Integer>>(index.get(key1));
+			for(Integer key : sortSousIndex.keySet()) {
+				//Sort de l'ArrayList
+				Collections.sort(sortSousIndex.get(key));
+			}
+			//Remplissage du nouvel index
+			sortIndex.put(key1, sortSousIndex);
+		}
+		//Modification de l'ancien index
+		index = sortIndex;
+	}
+
+
+
+
+	public void printIndex() {
+		for(Integer key1 : index.keySet()) {
+			System.out.println(key1);
+			for(Integer key2 : index.get(key1).keySet()) {
+				System.out.println("    "+key2);
+				for(Integer value : index.get(key1).get(key2)) {
+					System.out.println("        "+value);
+				}
+			}
+		}
+	}
+
+
 }
