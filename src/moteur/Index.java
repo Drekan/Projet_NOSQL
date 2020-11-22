@@ -38,11 +38,11 @@ public class Index {
 		if(!this.index.containsKey(i1)){
 			this.index.put(i1,new HashMap<>());
 		}
-		
+
 		if(!this.index.get(i1).containsKey(i2)){
 			this.index.get(i1).put(i2,new ArrayList<>());
 		}
-		
+
 		this.index.get(i1).get(i2).add(i3);
 
 		if(!this.index2.containsKey(i1)){
@@ -107,22 +107,22 @@ public class Index {
 	public int getvaluesNumber(){
 		return this.valuesNumber;
 	}
-	
+
 	public void displayNTriples(int n) { //display the first n triples
 		int countdown = n;
 		for(int k1 : this.index.keySet()) {
 			if(countdown == 0) break;
-			
+
 			for(int k2 : this.index.get(k1).keySet()) {
 				if(countdown == 0) break;
-				
+
 				for(int k3 : this.index.get(k1).get(k2)) {
 					if(countdown == 0) break;
-					
+
 					System.out.println("["+k1+","+k2+","+k3+"]");
 					countdown--;
 				}
-				
+
 			}
 		}
 	}

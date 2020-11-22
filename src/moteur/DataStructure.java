@@ -2,106 +2,105 @@ package moteur;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
 
 import parsers.RDFRawParser.RDFListener;
 
 public class DataStructure {
-    private Dictionnaire dico;
-    private HashMap<String,Index> indexes;
+	private Dictionnaire dico;
+	private HashMap<String,Index> indexes;
 
-    private Statistics stats;
-    private Options opt;
+	private Statistics stats;
+	private Options opt;
 
-    public DataStructure(Options options,Statistics stat) {
-        this.opt = options;
+	public DataStructure(Options options,Statistics stat) {
+		this.opt = options;
 
-        this.indexes = new HashMap<>();
-        
-        this.stats = stat;
-    }
+		this.indexes = new HashMap<>();
 
-    public Dictionnaire getDico() {
-        return dico;
-    }
+		this.stats = stat;
+	}
 
-    public HashMap<String,Index> getIndexes() {
-        return indexes;
-    }
+	public Dictionnaire getDico() {
+		return dico;
+	}
 
-    public Statistics getStats() {
-        return stats;
-    }
+	public HashMap<String,Index> getIndexes() {
+		return indexes;
+	}
 
-    public Options getOpt() {
-        return opt;
-    }
+	public Statistics getStats() {
+		return stats;
+	}
 
-
-    //TODO : mieux gérer FileNotFoundException
-    public void createDico(Boolean triLexicographique) throws FileNotFoundException{
-        this.dico = new Dictionnaire(triLexicographique);
-
-        String verbose = "";
-
-        RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
-        RDFListener rdfListener = new RDFListener(this.dico);
-        rdfParser.setRDFHandler(rdfListener);
-
-        try {
-            verbose+="Parsing des donn�es...\n";
-            long startTime_d = System.nanoTime();
-            rdfParser.parse(new FileReader(opt.getDataPath()),"");
-            this.dico.createDico();
-            long timeSpent_d = System.nanoTime() - startTime_d;
-
-            stats.setRDFTripleNum(dico.getTuples().size());
-
-            verbose+="La taille du dictionnaire est de " + dico.getSize()+"\n";
-            verbose+="Nombre total de ressources lues : " + rdfListener.ressourcesNum+"\n";
-
-            if(opt.getVerbose()) {
-                System.out.println(verbose);
-            }
+	public Options getOpt() {
+		return opt;
+	}
 
 
-        } catch (Exception e) {
+	//TODO : mieux gérer FileNotFoundException
+	public void createDico(Boolean triLexicographique) throws FileNotFoundException{
+		this.dico = new Dictionnaire(triLexicographique);
 
-        }
-    }
+		String verbose = "";
 
-    public void createIndexes() {
-        String verbose = "";
+		RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
+		RDFListener rdfListener = new RDFListener(this.dico);
+		rdfParser.setRDFHandler(rdfListener);
 
-        this.indexes.put("spo",new Index("spo"));
-        this.indexes.put("sop",new Index("sop"));
-        this.indexes.put("pos",new Index("pos"));
-        this.indexes.put("pso",new Index("pso"));
-        this.indexes.put("osp",new Index("osp"));
-        this.indexes.put("ops",new Index("ops"));
+		try {
+			verbose+="Parsing des donn�es...\n";
+			long startTime_d = System.nanoTime();
+			rdfParser.parse(new FileReader(opt.getDataPath()),"");
+			this.dico.createDico();
+			long timeSpent_d = System.nanoTime() - startTime_d;
 
-        ArrayList<String[]> tuples = this.dico.getTuples();
+			stats.setRDFTripleNum(dico.getTuples().size());
 
-        verbose+="Cr�ation des index...";
-        long startTime_i = System.nanoTime();
-        for(Index index : indexes.values()) {
-            for(int i=0;i<tuples.size();i++) {
-                index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));
-            }
-        }
+			verbose+="La taille du dictionnaire est de " + dico.getSize()+"\n";
+			verbose+="Nombre total de ressources lues : " + rdfListener.ressourcesNum+"\n";
 
-        long timeSpent_i = System.nanoTime() - startTime_i;
+			if(opt.getVerbose()) {
+				System.out.println(verbose);
+			}
 
-        stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
 
-        tuples.clear();
+		} catch (Exception e) {
 
-    }
+		}
+	}
+
+	public void createIndexes() {
+		String verbose = "";
+
+		this.indexes.put("spo",new Index("spo"));
+		this.indexes.put("sop",new Index("sop"));
+		this.indexes.put("pos",new Index("pos"));
+		this.indexes.put("pso",new Index("pso"));
+		this.indexes.put("osp",new Index("osp"));
+		this.indexes.put("ops",new Index("ops"));
+
+		ArrayList<String[]> tuples = this.dico.getTuples();
+
+		verbose+="Cr�ation des index...";
+		long startTime_i = System.nanoTime();
+		for(Index index : indexes.values()) {
+			for(int i=0;i<tuples.size();i++) {
+				index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));
+			}
+		}
+
+		long timeSpent_i = System.nanoTime() - startTime_i;
+
+		stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
+
+		tuples.clear();
+
+	}
 
 }

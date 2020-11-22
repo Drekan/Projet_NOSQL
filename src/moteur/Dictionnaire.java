@@ -40,10 +40,10 @@ public class Dictionnaire {
 		else {
 			this.intToString_dico.put(s.hashCode(),s);
 			this.stringToInt_dico.put(s,s.hashCode());
-			
+
 			this.intToString_dico.put(p.hashCode(),p);
 			this.stringToInt_dico.put(p,p.hashCode());
-			
+
 			this.intToString_dico.put(o.hashCode(),o);
 			this.stringToInt_dico.put(o,o.hashCode());
 
@@ -54,7 +54,7 @@ public class Dictionnaire {
 	//Remplissage des deux hashMap � partir des donn�es tri�es
 	//Le tri sert � conserver l'ordre lexicographique
 	public void createDico() {
-		
+
 		if(this.lexicographical_sort)
 			this.sortedRessources.sort(null);
 
