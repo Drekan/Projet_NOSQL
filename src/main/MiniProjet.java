@@ -32,7 +32,7 @@ public class MiniProjet {
         options.setJena(true);
         
         //à commenter
-        //options.setOptim_none(true);
+        options.setOptim_none(true);
 
 
         //II. Définition des DataStructure
