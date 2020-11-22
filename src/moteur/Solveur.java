@@ -504,7 +504,7 @@ public class Solveur {
 
         for(String k : right.keySet()) {
             if(!k.equals(starVariable)) {
-                varLeft.add(k);
+                varRight.add(k);
                 result.put(k,new ArrayList<>());
             }
         }
