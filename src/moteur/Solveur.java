@@ -167,9 +167,39 @@ public class Solveur {
 
         return subject+predicate+object;
     }
+    
+    public ArrayList<String> getVariables(StatementPattern sp) throws MalformedQueryException{
+    	ArrayList<String> variables = new ArrayList<>();
+    	
+		if(!sp.getSubjectVar().hasValue()) {
+			variables.add(sp.getSubjectVar().getName());
+		}
+		
+		if(!sp.getObjectVar().hasValue()) {
+			variables.add(sp.getObjectVar().getName());
+		}
+		
+		if(!sp.getPredicateVar().hasValue()) {
+			variables.add(sp.getPredicateVar().getName());
+		}
+		
+    	return variables;
+    }
 
     public ArrayList<String> getStarVariables(String req) throws MalformedQueryException {
-        return null;
+    	//les patterns sont récupérés
+    	List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
+    	
+    	//on initialise starVariables avec toutes les variables du premier pattern
+    	ArrayList<String> starVariables = new ArrayList<>(getVariables(patterns.get(0)));
+    	
+    	//on fait l'intersection avec les variables de chaque pattern
+    	for(StatementPattern sp : patterns) {
+    		starVariables.retainAll(getVariables(sp));
+    	}
+    	
+    	
+        return starVariables;
     }
 
 
