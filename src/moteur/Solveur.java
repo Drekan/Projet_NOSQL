@@ -489,7 +489,8 @@ public class Solveur {
 
         HashMap<String,ArrayList<Integer>> result = new HashMap<>();
         result.put(starVariable,new ArrayList<>());
-
+        
+        //TODO considérer uniquement les variables que l'on doit projeter
         ArrayList<String> varLeft = new ArrayList<>();
         ArrayList<String> varRight = new ArrayList<>();
 
@@ -505,7 +506,7 @@ public class Solveur {
 
         for(String k : right.keySet()) {
             if(!k.equals(starVariable)) {
-                varLeft.add(k);
+                varRight.add(k);
                 result.put(k,new ArrayList<>());
             }
         }
