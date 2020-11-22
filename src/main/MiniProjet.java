@@ -29,10 +29,10 @@ public class MiniProjet {
         
         Statistics statistiques = new Statistics(options);
 
-        //options.setJena(true);
+        options.setJena(true);
         
         //à commenter
-        options.setOptim_none(true);
+        //options.setOptim_none(true);
 
 
         //II. Définition des DataStructure
