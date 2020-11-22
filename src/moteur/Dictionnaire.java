@@ -7,8 +7,15 @@ import org.apache.jena.shared.NotFoundException;
 public class Dictionnaire {
 	//TODO: mettre en cache ?
 
-	private ArrayList<String[]> tuples; //Donn�es non tri�es sous forme de tuples pour cr�er les index
-	private ArrayList<String> sortedRessources; //Donn�es tri�es lexicographiquement
+	/**
+	 * Donn�es non tri�es sous forme de tuples pour cr�er les index
+	 */
+	private ArrayList<String[]> tuples;
+
+	/**
+	 * Donn�es tri�es lexicographiquement
+	 */
+	private ArrayList<String> sortedRessources;
 	private Boolean lexicographical_sort;
 	private HashMap<Integer,String> intToString_dico;
 	private HashMap<String,Integer> stringToInt_dico;
@@ -29,7 +36,9 @@ public class Dictionnaire {
 		}
 	}
 
-	//Ajoute des donn�es dans les ArrayList tuples et sortedRessources
+	/**
+	 * Ajoute des donn�es dans les ArrayList tuples et sortedRessources
+	 */
 	public void add(String s,String p,String o) {
 		this.tuples.add(new String[] {s,p,o});
 		if(this.lexicographical_sort) {	
@@ -47,13 +56,14 @@ public class Dictionnaire {
 
 			this.intToString_dico.put(o.hashCode(),o);
 			this.stringToInt_dico.put(o,o.hashCode());
-
 		}
 
 	}
 
-	//Remplissage des deux hashMap � partir des donn�es tri�es
-	//Le tri sert � conserver l'ordre lexicographique
+	/**
+	 * Remplissage des deux hashMap à partir des données triees
+	 * 	Le tri sert à conserver l'ordre lexicographique
+	 */
 	public void createDico() {
 
 		if(this.lexicographical_sort)

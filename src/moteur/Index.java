@@ -7,25 +7,41 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Index {
-	//TODO statistiques, arborescence
+	//TODO statistiques
 
-	private String type; //Type de l'index : spo, sop, pso, pos, osp, ops
-	//TODO -> faire aussi sp, so, os, op, po, ps, o, p, s
+	/**
+	 * Type de l'index : spo, sop, pso, pos, osp, ops, sp, so, os, op, po, ps, o, p, s
+	 */
+	private String type;
 
+	/**
+	 * Index (po, sop, pso, pos, osp, ops)
+	 */
 	private Map<Integer, Map<Integer, ArrayList<Integer>>> index;
-	//sp, so, os, op, po, ps,
+
+	/**
+	 * Index (sp, so, os, op, po, ps) - nombre d'occurences
+	 * Utile pour calculer le critère de sélectivité
+	 */
 	private HashMap<Integer, HashMap<Integer, Integer>> index2;
-	//o, p, s
+
+	/**
+	 * Index (o, p, s)- nombre d'occurences
+	 * Utile pour calculer le critère de sélectivité
+	 */
 	private HashMap<Integer, Integer> index1;
 
-	private Integer valuesNumber; //TODO: à comparer avec la taille du dictionnaire
+	/**
+	 * Connaitre le nombre de tuples
+	 * Utile pour calculer le critère de sélectivité
+	 */
+	private Integer valuesNumber;
 
 	public Index(String t) {
 		this.type = t;
-		this.index = new HashMap<Integer, Map<Integer, ArrayList<Integer>>>();
+		this.index = new HashMap<>();
 		this.index1 = new HashMap<>();
 		this.index2 = new HashMap<>();
-
 		this.valuesNumber = 0;
 	}
 
@@ -49,7 +65,6 @@ public class Index {
 			this.valuesNumber++;
 		}
 
-		
 		if(!this.index2.containsKey(i1))
 			this.index2.put(i1,new HashMap<>());
 
@@ -129,8 +144,11 @@ public class Index {
 	}
 
 
+	/**
+	 * Utile pour le sort-merge-join de la méthode optimisée
+	 */
 	public void sortIndex() {
-		//Cr�ation du nouvel index
+		//Cr�ation du nouvel index
 		Map<Integer, Map<Integer, ArrayList<Integer>>> sortIndex = new TreeMap<Integer, Map<Integer, ArrayList<Integer>>>();
 		for(Integer key1 : index.keySet()) {
 			//Sort des sous HashMap
@@ -147,8 +165,6 @@ public class Index {
 	}
 
 
-
-
 	public void printIndex() {
 		for(Integer key1 : index.keySet()) {
 			System.out.println(key1);
@@ -160,6 +176,5 @@ public class Index {
 			}
 		}
 	}
-
 
 }

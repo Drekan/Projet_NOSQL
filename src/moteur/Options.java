@@ -10,7 +10,7 @@ public class Options {
 	Boolean jena;
 	Boolean shuffle;
 	float warmPct;
-	Boolean optim_none; //TODO: vaut true si pas d'optimisation donc utilisation de
+	Boolean optim_none;
 	Boolean star_queries;
 
 	public String getQueriesPath() {
@@ -153,6 +153,4 @@ public class Options {
 			}
 		}
 	}
-
-
 }

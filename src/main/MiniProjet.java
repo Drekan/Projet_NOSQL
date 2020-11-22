@@ -12,8 +12,13 @@ public class MiniProjet {
 
     //TODO: gérer l'UTF-8
 
+	/**
+	 * Classe principale du projet
+	 * @param args
+	 * @throws IOException
+	 * @throws MalformedQueryException
+	 */
 	public static void main(String[] args) throws IOException, MalformedQueryException {
-        System.setProperty( "file.encoding", "UTF-8" ); //TODO: ça marche ?
         long startTime_i = System.nanoTime();
 		String optionsLine = ""; // TODO: à supprimer et remplacer par args
 		//I. Définition des options
@@ -39,17 +44,11 @@ public class MiniProjet {
 
 		dataStructure.createIndexes(statistiques);
 
-		if(options.getExport_query_stats()){
-
-		}
-
 		//III. Partie solveur
 		Solveur solveur = new Solveur(dataStructure, options, statistiques);
-
 		//TODO: à améliorer
         long timeSpent_i = System.nanoTime() - startTime_i;
 		solveur.traiterQueries((int)timeSpent_i/1000000);
-
 
 	}
 

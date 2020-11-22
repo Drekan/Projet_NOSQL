@@ -17,7 +17,6 @@ public class DataStructure {
 
 	public DataStructure(Options options) {
 		this.opt = options;
-
 		this.indexes = new HashMap<>();
 	}
 
@@ -86,6 +85,9 @@ public class DataStructure {
 			}
 		}
 
+		if(opt.getVerbose()) {
+			System.out.println(verbose);
+		}
 		long timeSpent_i = System.nanoTime() - startTime_i;
 
 		stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
