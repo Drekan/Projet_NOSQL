@@ -121,16 +121,16 @@ public class Statistics {
 			myWriter.write(
 					dataPath+","+
 							queriesPath+","+
-	        		  RDFTripleNum+","+
-	        		  queriesNum+","+
-	        		  queriesNum+","+
-	        		  queriesReadTime+","+
-	        		  dicCreationTime+","+
-	        		  indexesNum+","+
-	        		  indexesCreationTotalTime+","+
-	        		  workloadEvaluationTime+","+
-	        		  optimizationTime+","+
-	        		  totalTime+","
+							RDFTripleNum+","+
+							queriesNum+","+
+							queriesNum+","+
+							queriesReadTime+","+
+							dicCreationTime+","+
+							indexesNum+","+
+							indexesCreationTotalTime+","+
+							workloadEvaluationTime+","+
+							optimizationTime+","+
+							totalTime+","
 					);
 
 			myWriter.close();
