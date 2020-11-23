@@ -41,8 +41,7 @@ public class Dictionnaire {
 	 */
 	public void add(String s,String p,String o) {
 		this.tuples.add(new String[] {s,p,o});
-		if(this.lexicographical_sort) {	
-
+		if(this.lexicographical_sort) {
 			addDistinct(s);
 			addDistinct(p);
 			addDistinct(o);

@@ -107,12 +107,7 @@ public class Solveur {
 		return null;
 	}
 
-	/**
-	 *
-	 * @param timeSpent
-	 * @throws MalformedQueryException
-	 */
-	public void traiterQueries(long timeSpent) throws MalformedQueryException {
+	public void supprimerOutput(){
 		try{
 			if(this.options.getExport_query_stats()){
 				File stats = new File (this.options.getOutputPath()+"queryStat.csv");
@@ -131,13 +126,24 @@ public class Solveur {
 					System.out.println("Opération de suppression echouée");
 				}
 			}
-
 		}
 		catch (Exception e){
 			//?
 		}
+	}
 
-		System.out.println(this.dictionnaire.getSize()+" "+this.indexes.get("pos").getValuesNumber());
+	public static int timeSec(long timeSpent){
+		return (int)timeSpent/1000000;
+	}
+
+	/**
+	 *
+	 * @param prec_timeSpent
+	 * @throws MalformedQueryException
+	 */
+	public void traiterQueries(long prec_timeSpent) throws MalformedQueryException {
+		supprimerOutput();
+
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
 
@@ -156,7 +162,7 @@ public class Solveur {
 			ArrayList<String> starVariables = getStarVariables(query);
 			if(starVariables.size()==0) {
 				if (!optim_none) {
-					System.out.println("OPTIM");
+					System.out.println("OPTIM"); //TODO: verbose
 					solveOptim(query);
 				} else {
 					System.out.println("NAIVE");
@@ -168,12 +174,11 @@ public class Solveur {
 				solveStarQuery(query,starVariables);
 			}
 		}
-		long timeSpent_i = System.nanoTime() - startTime_i;
+		long timeSpent = System.nanoTime() - startTime_i;
 		//TODO: on a pas pris en compte le warm ou quoi ?
-		this.stats.setWorkloadEvaluationTime((int)timeSpent_i/1000000);
+		this.stats.setWorkloadEvaluationTime(timeSec(timeSpent));
 		this.stats.setQueriesNum(queries.size());
-		this.stats.setTotalTime((int)timeSpent_i/1000000+(int)timeSpent/1000000);
-		//TODO: mettre dans des variables pour que ce soit joli ? ou fonction ?
+		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
 
 		//TODO: est-ce bien cette fonction ?
 		//if(options.getExport_query_stats()){
@@ -188,6 +193,13 @@ public class Solveur {
 
 		return subject+predicate+object;
 	}
+
+	/**
+	 * Obtenir les variables d'un pattern
+	 * @param sp
+	 * @return
+	 * @throws MalformedQueryException
+	 */
 
 	public ArrayList<String> getVariables(StatementPattern sp) throws MalformedQueryException{
 		ArrayList<String> variables = new ArrayList<>();
@@ -207,6 +219,12 @@ public class Solveur {
 		return variables;
 	}
 
+	/**
+	 * Obtenir les constantes d'un pattern
+	 * @param sp
+	 * @return
+	 * @throws MalformedQueryException
+	 */
 	public ArrayList<String> getConstantes(StatementPattern sp) throws MalformedQueryException{
 		ArrayList<String> constantes = new ArrayList<>();
 
@@ -221,7 +239,6 @@ public class Solveur {
 		if(sp.getObjectVar().hasValue()) {
 			constantes.add(sp.getObjectVar().getValue().toString().replace("\"",""));
 		}
-
 
 		return constantes;
 	}
@@ -367,9 +384,6 @@ public class Solveur {
 				else {
 					//Cas où il y a 3 variables
 					//Choix de base SPO
-					//TODO: normalement n'arrive jamais alors on enlève ?
-					// TODO: est-ce qu'il existe un plus optimisé qu'un autre?
-					// TODO: Vérifier noms de variables
 
 					Index spo = this.indexes.get("spo");
 
@@ -418,9 +432,6 @@ public class Solveur {
 			}
 
 			globalResult.add(results);
-
-
-
 		}
 
 
