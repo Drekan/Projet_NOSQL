@@ -132,15 +132,14 @@ public class Solveur {
         long startTime_i = System.nanoTime();
 
         for(String query: queries) {
-            System.out.println("CC");
             //TODO: vérifier que la req  est en étoile
             ArrayList<String> starVariables = getStarVariables(query);
             if(starVariables.size()==0) {
                 if (!optim_none) {
-                    System.out.println("OPTIM");
+                    System.out.println("General query : OPTIM");
                     solveOptim(query);
                 } else {
-                    System.out.println("NAIVE");
+                    System.out.println("General query : NAIVE");
                     solve(query);
                 }
             }
@@ -230,13 +229,25 @@ public class Solveur {
     
     public ArrayList<ArrayList<String>> produitCartesien(ArrayList<ArrayList<String>> left,ArrayList<ArrayList<String>> right){
     	ArrayList<ArrayList<String>> result = new ArrayList<>();
+    	result.add(new ArrayList<>());
+    	ArrayList<String> concat = left.get(0);
+    	concat.addAll(right.get(0));
     	
+    	result.get(0).addAll(concat);
+    	
+    	int i = 0;
     	for(ArrayList<String> leftLine : left) {
+    		int j = 0;
     		for(ArrayList<String> rightLine : right){
-    			ArrayList<String> concat = new ArrayList<>(leftLine);
-    			concat.addAll(rightLine);
-    			result.add(concat);
+    			if(i!=0 && j!=0) {
+    				concat = new ArrayList<>(leftLine);
+        			concat.addAll(rightLine);
+        			result.add(concat);
+    			}
+    			
+    			j++;
     		}
+    		i++;
     	}
     	
     	return result;
@@ -383,6 +394,8 @@ public class Solveur {
     		
     		globalResult.add(results);
     		
+
+    		
     	}
     	
     	
@@ -396,6 +409,38 @@ public class Solveur {
     	}
     	
     	ArrayList<ArrayList<String>> queryResult = globalResult.get(0);
+    	
+    	
+		 //Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
+        ArrayList<String> varToReturn = new ArrayList<>();
+        ParsedQuery pq = new SPARQLParser().parseQuery(req, null);
+        pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
+            public void meet(Projection projection) {
+                List<ProjectionElem> test = projection.getProjectionElemList().getElements();
+                for(ProjectionElem p: test){
+                    varToReturn.add(p.getSourceName());
+                }
+            }
+        });
+
+        ArrayList<Integer> indicesVariablesProjetees = new ArrayList<>();
+        for(int i = 0; i<queryResult.get(0).size();i++) {
+            if(varToReturn.contains(queryResult.get(0).get(i))) {
+                indicesVariablesProjetees.add(i);
+            }
+        }
+        
+        if(this.options.getVerbose()) {
+        	System.out.println("--------Résultats--------");
+            for (ArrayList<String> ligne : queryResult) {
+                for(int i = 0 ; i<ligne.size();i++) {
+                    if(indicesVariablesProjetees.contains(i)) {
+                        System.out.print(ligne.get(i)+", ");
+                    }
+                }
+                System.out.println();
+            }
+        }
     	
     }
 
