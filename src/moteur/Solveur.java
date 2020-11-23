@@ -6,16 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -25,6 +16,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.FileManager;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.Projection;
@@ -245,32 +237,210 @@ public class Solveur {
 
 		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
 
-		verbose+="-- Lecture de chaque pattern"+"\n";
+		verbose+="-- Lecture de chaque pattern par sélectivité croissante"+"\n";
 
 		HashMap<StatementPattern, Double> selectivities = new HashMap<>();
 		for(StatementPattern sp: patterns) {
 			selectivities.put(sp,selectivity(sp));
 		}
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
-		ArrayList<String> allVariable = new ArrayList<>();
+
+		HashMap<String, ArrayList<Integer>> resultsPerVariable = new HashMap<>();
+
+
 		while(alreadySolved.size()<patterns.size()) {
+			//TODO: vérifier que ça marche
 			StatementPattern spCurrent = minSelectivity(alreadySolved, selectivities);
+
+			HashMap<String, ArrayList <Integer>> getResult = getResult(spCurrent, resultsPerVariable);
+
+			System.out.println("/::::::::::::::"+ getResult.get("x"));
+			System.out.println("----- "+resultsPerVariable.get("x"));
+			//Si pas la variable
+			/*
+			for(String key: getResult.keySet()) {
+				if (!resultsPerVariable.containsKey(key)) {
+					resultsPerVariable.put(key, new ArrayList<>(getResult.get(key)));
+				} else {
+					//TODO: prendre les valeurs
+					resultsPerVariable.get(key).retainAll(getResult.get(key));
+				}
+			}*/
+			for(String s: resultsPerVariable.keySet()){
+				System.out.println(s+" "+resultsPerVariable.get(s));
+			}
 		}
+
+		//this.sortMergeJoin();
+
+
 		//TODO: optimization time
+
+		//On construit une chaine de caractères sous format CSV de nos résultats
+		// Afin de pouvoir le comparer à celui de Jena
+
+		String CSVResults="";
+		/*
+		for (String : results) {
+			for(int i = 0 ; i<ligne.size();i++) {
+				if(indicesVariablesProjetees.contains(i)) {
+					CSVResults+=ligne.get(i)+",";
+				}
+			}
+			CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+			CSVResults+="\n";
+		}
+
+		 */
+
+
+		String jenaString = "NON_DISPONIBLE";
+		if(this.options.getJena()) {
+			Boolean jena = this.jenaComparison(req, CSVResults);
+			if(jena){
+				jenaString = "True";
+			}
+			else{
+				jenaString="False";
+			}
+		}
 
 		long timeSpent = System.nanoTime() - startTime;
 		Integer tS = ((int)timeSpent/1000000);
+		System.out.println("TEMPS= "+ tS.toString());
+	}
+
+	//Avoir la meme taille pour les AL dans results
+	public HashMap<String, ArrayList<Integer>> getResult(StatementPattern sp, HashMap<String, ArrayList<Integer>> results) throws MalformedQueryException {
+		String verbose = "";
+		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
+		ArrayList<String> allVariable = new ArrayList<>();
+		//on encode le pattern pour savoir quel index utiliser
+
+		String indexType = this.indexMap.get(this.encodePattern(sp));
+		Index index = this.indexes.get(indexType);
+
+		verbose+="  Index utilisé: " + indexType+"\n";
+
+		ArrayList<String> variables = getVariables(sp);
+		ArrayList<String> constantes = getConstantes(sp);
+
+		//on ajoute les variables dans la hashmap du pattern actuel
+		for(String v: variables) {
+			if(!allVariable.contains(v)) {
+				allVariable.add(v);
+			}
+			res.put(v,new ArrayList<>());
+		}
+
+		if(constantes.size() == 2) { // deux constantes dans le pattern
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
+			int c2 = this.dictionnaire.getValue(constantes.get(1));
+
+			//Si resultats a la variable
+			if(results.containsKey(variables.get(0))){
+				//S'il ne l'a alors on l'a rajoute au résultat du pattern
+				if(results.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))){
+					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+				}
+			}else {
+				//si résultat a pas la variable alors on l'ajoute
+				res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+				results.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
+				System.out.println(results.toString());
+			}
+		}
+		else if(constantes.size() == 1) { // une constante dans le pattern
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
+
+			Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
+			ArrayList<Integer> resO = new ArrayList();
+			for (int i : keys_c1) {
+				for(int j : index.getIndex().get(c1).get(i)) {
+					//TODO
+					// get(0) = x / get(1) = y
+					// a x en var
+
+					/*
+					if(results.containsKey(variables.get(0))){
+						//a la valeur de x
+						if(results.get(variables.get(0)).contains(index.getIndex().get(c1).get(i))){
+							res.get(variables.get(0)).add(i);
+						}
+						if(results.containsKey(variables.get(1))) {
+							if (results.get(variables.get(1)).contains(index.getIndex().get(c1).get(i))) {
+								res.get(variables.get(1)).add(j);
+							}
+						}
+						else {
+							res.get(variables.get(1)).add(j);
+							results.get(variables.get(1)).add(j);
+						}
+						results.get(variables.get(0)).add(i);
+					}
+					else if(results.containsKey(variables.get(1))) {
+						if (results.get(variables.get(1)).contains(index.getIndex().get(c1).get(i))) {
+							res.get(variables.get(1)).add(j);
+						}
+						res.get(variables.get(0)).add(i);
+						results.get(variables.get(0)).add(i);
+						results.get(variables.get(1)).add(j);
+					}
+
+					else{
+						res.get(variables.get(0)).add(i);
+						res.get(variables.get(1)).add(j);
+						results.get(variables.get(0)).add(i);
+						results.get(variables.get(1)).add(j);
+					}
+
+					 */
+				}
+			}
+		}
+		else {
+			//Cas où il y a 3 variables
+			//Choix de base SPO
+
+			Index spo = this.indexes.get("spo");
+
+			for(int s : spo.getIndex().keySet()) {
+				for(int p : spo.getIndex().get(s).keySet()) {
+					for(int o : spo.getIndex().get(s).get(p)) {
+						if(results.containsKey(variables.get(0))){
+							if(results.get(variables.get(0)).contains(index.getIndex().get(s).get(p))){
+								res.get(variables.get(0)).add(s);
+								res.get(variables.get(1)).add(p);
+								res.get(variables.get(2)).add(o);
+							}
+						}else {
+							res.get(variables.get(0)).add(s);
+							res.get(variables.get(1)).add(p);
+							res.get(variables.get(2)).add(o);
+							results.get(variables.get(0)).add(s);
+							results.get(variables.get(1)).add(p);
+							results.get(variables.get(2)).add(o);
+						}
+					}
+				}
+			}
+		}
+		System.out.println("hello");
+		results = new HashMap<>();
+		System.out.println(results.size());
+		return res;
 	}
 
 	public StatementPattern minSelectivity(ArrayList<StatementPattern> alreadySolved, HashMap<StatementPattern, Double> selectivities){
 		StatementPattern minSp = new StatementPattern();
-		long minS = 1;
+		double minS = 1;
 		for(StatementPattern sp: selectivities.keySet()){
 			if(selectivities.get(sp)<minS && !alreadySolved.contains(sp)){
-				alreadySolved.add(sp);
-				return minSp;
+				minSp = sp;
+				minS = selectivities.get(sp);
 			}
 		}
+		alreadySolved.add(minSp);
 		return minSp;
 	}
 
@@ -417,15 +587,11 @@ public class Solveur {
 
 		String jenaString = "NON_DISPONIBLE";
 		if(this.options.getJena()) {
-			String[] jena = jenaSolve(req).split("\n");
-			String[] ourResult = CSVResults.split("\n");
-
-			if (jena[0].contains(ourResult[0])&& jena[1].contains(ourResult[1])) { //TODO WARNING
-				System.out.println("Jena-True");
-				jenaString="True";
+			Boolean jena = this.jenaComparison(req, CSVResults);
+			if(jena){
+				jenaString = "True";
 			}
-			else {
-				System.out.println("Jena-False");
+			else{
 				jenaString="False";
 			}
 		}
@@ -555,7 +721,7 @@ public class Solveur {
 
 
 	public Map<String,ArrayList<Integer>> sortMergeJoin(Integer[][] left, Integer[][] right, String variable){
-		//Liste des r�sultats (x : < 1,2...>)
+		//Liste des r�sultats (x : < 1,2...>)
 		Map<String,ArrayList<Integer>> result = new HashMap<>();
 		result.put(variable,new ArrayList<>());
 
@@ -578,7 +744,6 @@ public class Solveur {
 
 		return result;
 	}
-
 
 
 
@@ -623,7 +788,6 @@ public class Solveur {
 				} finally {
 					qexec.close();
 				}
-
 			}
 
 			//(String req,String dataPath,String queriesPath,String outputPath)
@@ -684,9 +848,22 @@ public class Solveur {
 		}
 	}
 
+	public boolean jenaComparison(String req, String ourResultCSV){
+		//TODO ATTENTION AUX "EXCES"
+		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
+		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
+
+		for(String j: jena){
+			if (!ourResult.contains(j)){
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public void warm(float pct, ArrayList<String> queries, boolean optim_none) throws MalformedQueryException {
 		Float queriesToExec=queries.size()*pct;
-		ArrayList starVariables = new ArrayList();
+		ArrayList starVariables;
 		ArrayList<Integer> generated = new ArrayList<>();
 
 		for(int i=0; i<queriesToExec;i++){
@@ -707,6 +884,7 @@ public class Solveur {
 				}
 			}
 			else{
+				System.out.println("STAR QUERIES");
 				solveStarQuery(queries.get(c),starVariables);
 			}
 		}
@@ -749,9 +927,7 @@ public class Solveur {
 		String i1 = indexType.substring(0,1);
 
 		String i2 = indexType.substring(1,2);
-		System.out.println(indexType+"->"+i1+"_"+i2);
 
-		//System.out.println("___"+this.indexes.get("spo").getValuesNumber());
 		if (constantes.size() == 2) {
 			System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
 			return this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
@@ -801,7 +977,3 @@ public class Solveur {
 		}
 	}
 }
-
-
-
-
