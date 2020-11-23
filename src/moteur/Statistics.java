@@ -114,23 +114,23 @@ public class Statistics {
 		this.queriesPath = queriesPath;
 	}
 
+	//TODO: écrire à la suite ou pas ?
 	public void writeStats() {
 		try {
-			FileWriter myWriter = new FileWriter(outputPath+"queryStat.csv");
+			FileWriter myWriter = new FileWriter(outputPath+"queriesStat.csv");
 			myWriter.write(
 					dataPath+","+
 							queriesPath+","+
-
-	        		  RDFTripleNum+","+
-	        		  queriesNum+","+
-	        		  queriesNum+","+
-	        		  queriesReadTime+","+
-	        		  dicCreationTime+","+
-	        		  indexesNum+","+
-	        		  indexesCreationTotalTime+","+
-	        		  workloadEvaluationTime+","+
-	        		  optimizationTime+","+
-	        		  totalTime+","
+							RDFTripleNum+","+
+							queriesNum+","+
+							queriesNum+","+
+							queriesReadTime+","+
+							dicCreationTime+","+
+							indexesNum+","+
+							indexesCreationTotalTime+","+
+							workloadEvaluationTime+","+
+							optimizationTime+","+
+							totalTime+","
 					);
 
 			myWriter.close();
