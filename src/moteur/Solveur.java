@@ -102,6 +102,30 @@ public class Solveur {
 	 * @throws MalformedQueryException
 	 */
 	public void traiterQueries(long timeSpent) throws MalformedQueryException {
+		try{
+			if(this.options.getExport_query_stats()){
+				File stats = new File (this.options.getOutputPath()+"queryStat.csv");
+				if(stats.delete()){
+					System.out.println(stats.getName() + " est supprimé.");
+				}else{
+					System.out.println("Opération de suppression echouée");
+				}
+			}
+
+			if(this.options.getExport_query_results()){
+				File result = new File (this.options.getOutputPath()+"queryResult.csv");
+				if(result.delete()){
+					System.out.println(result.getName() + " est supprimé.");
+				}else{
+					System.out.println("Opération de suppression echouée");
+				}
+			}
+
+		}
+		catch (Exception e){
+			//?
+		}
+
 		System.out.println(this.dictionnaire.getSize()+" "+this.indexes.get("pos").getValuesNumber());
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
@@ -141,9 +165,9 @@ public class Solveur {
 		//TODO: mettre dans des variables pour que ce soit joli ? ou fonction ?
 
 		//TODO: est-ce bien cette fonction ?
-		if(options.getExport_query_stats()){
-			this.stats.writeStats();
-		}
+		//if(options.getExport_query_stats()){
+		this.stats.writeStats();
+		//}
 	}
 
 	public String encodePattern(StatementPattern sp) {
@@ -808,18 +832,17 @@ public class Solveur {
 		if(this.options.getJena()) {
 			Boolean jena = this.jenaComparison(req, CSVResults);
 			if(jena){
-				jenaString = "True";
+				jenaString = "true";
 			}
 			else{
-				jenaString="False";
+				jenaString="false";
 			}
 		}
 
-		//TODO : QUELLE STRUCTURRRE POUR LE CSV ???
 		if(this.options.getExport_query_results()) {
 			try {
-				FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv");
-				myWriter.write(CSVResults);
+				FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv",true);
+				myWriter.write(req+"\n"+CSVResults); //TODO: à vérifier
 				myWriter.close();
 			} catch (IOException e) {
 				System.out.println("Erreur dans l'écriture du résultat de la requête");
@@ -1198,90 +1221,6 @@ public class Solveur {
 		return this.dictionnaire.getValue(res);
 	}
 
-	public void test(StatementPattern sp,HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults, String verbose, ArrayList<String> allVariable, ArrayList<String> starVariable){
-		allResults.put(sp,new HashMap<>());
-
-		System.out.println("$$$ "+sp);
-		//on encode le pattern pour savoir quel index utiliser
-		String indexType = this.indexMap.get(this.encodePattern(sp));
-
-		Index index = this.indexes.get(indexType);
-
-		verbose+="  Index utilisé: " + indexType+"\n";
-
-		//les termes de la requete sont recuperes...
-		ArrayList<Var> varList = new ArrayList<>();
-		varList.add(sp.getSubjectVar());
-		varList.add(sp.getPredicateVar());
-		varList.add(sp.getObjectVar());
-
-		//...puis separes en constante / variable
-		ArrayList<String> variables = new ArrayList<>();
-		ArrayList<String> constantes = new ArrayList<>();
-
-		for(Var v : varList) {
-			if(v.hasValue()) {
-				constantes.add(v.getValue().toString().replace("\"",""));
-			}
-			else {
-				variables.add(v.getName());
-			}
-		}
-
-		if(starVariable.isEmpty()) {
-			starVariable = (ArrayList<String>)variables.clone();
-		}
-		else {
-			starVariable.retainAll(variables);
-		}
-
-		//on ajoute les variables dans la hashmap du pattern actuel
-		for(String v: variables) {
-			if(!allVariable.contains(v)) {
-				allVariable.add(v);
-			}
-			allResults.get(sp).put(v,new ArrayList<>());
-		}
-
-		if(constantes.size() == 2) { // deux constantes dans le pattern
-			int c1 = this.dictionnaire.getValue(constantes.get(0));
-			int c2 = this.dictionnaire.getValue(constantes.get(1));
-
-			allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
-		}
-		else if(constantes.size() == 1) { // une constante dans le pattern
-			int c1 = this.dictionnaire.getValue(constantes.get(0));
-
-			Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
-			ArrayList<Integer> resO = new ArrayList();
-			for (int i : keys_c1) {
-				for(int j : index.getIndex().get(c1).get(i)) {
-					allResults.get(sp).get(variables.get(0)).add(i);
-					allResults.get(sp).get(variables.get(1)).add(j);
-				}
-			}
-		}
-		else {
-			//Cas où il y a 3 variables
-			//Choix de base SPO
-			//TODO: normalement n'arrive jamais alors on enlève ?
-			// TODO: est-ce qu'il existe un plus optimisé qu'un autre?
-			// TODO: Vérifier noms de variables
-
-			Index spo = this.indexes.get("spo");
-
-			for(int s : spo.getIndex().keySet()) {
-				for(int p : spo.getIndex().get(s).keySet()) {
-					for(int o : spo.getIndex().get(s).get(p)) {
-						allResults.get(sp).get(variables.get(0)).add(s);
-						allResults.get(sp).get(variables.get(1)).add(p);
-						allResults.get(sp).get(variables.get(2)).add(o);
-					}
-				}
-			}
-		}
-	}
-
 	public Map<String,ArrayList<Integer>> sortMergeJoin(Integer[][] left, Integer[][] right, String variable){
 		//Liste des r�sultats (x : < 1,2...>)
 		Map<String,ArrayList<Integer>> result = new HashMap<>();
@@ -1312,7 +1251,7 @@ public class Solveur {
 	public void writeQueryStat(String req, String evalTime, String nbRep, String evalOrder, String selectivity, String jenaComparison){
 		if(this.options.getExport_query_stats()) {
 			try {
-				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv");
+				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
 				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison);
 				myWriter.close();
 			} catch (IOException e) {
