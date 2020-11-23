@@ -485,7 +485,6 @@ public class Solveur {
 			HashMap<String, ArrayList <Integer>> getResult = getResult(spCurrent, resultsPerVariable);
 
 			System.out.println("/::::::::::::::"+ getResult.get("x"));
-			System.out.println("----- "+resultsPerVariable.get("x"));
 			//Si pas la variable
 			/*
 			for(String key: getResult.keySet()) {
@@ -501,7 +500,8 @@ public class Solveur {
 			}
 		}
 
-		//this.sortMergeJoin();
+		//sortMergeJoin();
+
 
 
 		//TODO: optimization time
@@ -568,7 +568,7 @@ public class Solveur {
 			int c2 = this.dictionnaire.getValue(constantes.get(1));
 
 			//Si resultats a la variable
-			if(results.containsKey(variables.get(0))){
+			/*if(results.containsKey(variables.get(0))){
 				//S'il ne l'a alors on l'a rajoute au résultat du pattern
 				if(results.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))){
 					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
@@ -578,7 +578,12 @@ public class Solveur {
 				res.put(variables.get(0), index.getIndex().get(c1).get(c2));
 				results.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
 				System.out.println(results.toString());
-			}
+			}*/
+			
+			
+			res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+			results.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
+			
 		}
 		else if(constantes.size() == 1) { // une constante dans le pattern
 			int c1 = this.dictionnaire.getValue(constantes.get(0));
@@ -591,7 +596,7 @@ public class Solveur {
 					// get(0) = x / get(1) = y
 					// a x en var
 
-					/*
+					
 					if(results.containsKey(variables.get(0))){
 						//a la valeur de x
 						if(results.get(variables.get(0)).contains(index.getIndex().get(c1).get(i))){
@@ -623,8 +628,7 @@ public class Solveur {
 						results.get(variables.get(0)).add(i);
 						results.get(variables.get(1)).add(j);
 					}
-
-					 */
+					
 				}
 			}
 		}
@@ -655,9 +659,6 @@ public class Solveur {
 				}
 			}
 		}
-		System.out.println("hello");
-		results = new HashMap<>();
-		System.out.println(results.size());
 		return res;
 	}
 

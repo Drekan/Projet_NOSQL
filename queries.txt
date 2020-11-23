@@ -5,7 +5,7 @@
 
 
 
-SELECT * WHERE{ ?x <http://purl.org/stuff/rev#title> "Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius" . ?y <http://purl.org/stuff/rev#rating> "9"}
+SELECT ?x ?y WHERE{ ?x <http://purl.org/stuff/rev#title> "Nettapus ruckus bebeast wattage wrawl amphisarca upsweep bogart montroydite Xiphius" . ?y <http://purl.org/stuff/rev#rating> "9"}
 
 
 
