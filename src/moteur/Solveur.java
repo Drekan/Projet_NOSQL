@@ -222,8 +222,40 @@ public class Solveur {
     }
 
 
-    public void solve(String req){
-
+    public void solve(String req) throws MalformedQueryException{
+    	List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
+    	
+    	//1. regrouper les patterns connexes
+    	HashMap<StatementPattern,Integer> patternConnexes = new HashMap<>();
+    	
+    	int index=0;
+    	//au début, un sp par case, puis on va les regrouper par composante connexe
+    	for(StatementPattern sp : patterns) {
+    		patternConnexes.put(sp,index);
+    		index++;
+    	}
+    	
+    	for(StatementPattern sp1 : patterns) {
+    		for(StatementPattern sp2 : patterns) {
+    			ArrayList<String> variablesSp1 = getVariables(sp1);
+    			ArrayList<String> variablesSp2 = getVariables(sp2);
+    			
+    			variablesSp1.retainAll(variablesSp2);
+    			
+    			//intersection non vide <=> il y a des variables communes entre sp1 et sp2
+    			if(!variablesSp1.isEmpty()) {
+    				patternConnexes.put(sp1,patternConnexes.get(sp1));
+    			}
+    		}
+    	}
+    	
+    	System.out.println("Composantes connexes :");
+    	for(StatementPattern sp : patternConnexes.keySet()) {
+    		System.out.println("k : "+sp.toString()+" composante connexe : "+ patternConnexes.get(sp));
+    	}
+    	
+    	//2. Merge chaque composante (donc trouver une colonne sur laquelle on peut merge)
+    	//3. Faire un produit cartésien de chaque table : c'est les résultats
     }
 
     //Solve optimisé
