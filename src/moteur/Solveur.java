@@ -37,14 +37,14 @@ import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.query.parser.sparql.SPARQLParser;
 
 public class Solveur {
-    private Dictionnaire dictionnaire;
+	private Dictionnaire dictionnaire;
 
-    private HashMap<String, Index> indexes;
+	private HashMap<String, Index> indexes;
 
-    private Options options;
+	private Options options;
 
-    private Statistics stats;
-    
+	private Statistics stats;
+
 	/**
 	 * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
 	 *
@@ -74,10 +74,10 @@ public class Solveur {
 		this.indexMap.put("12","pos");
 	}
 
-	
-    public Statistics getStats(){
-        return  this.stats;
-    }
+
+	public Statistics getStats(){
+		return  this.stats;
+	}
 
 	/**
 	 * Construit et retourne un arraylist contenant toutes les requetes
@@ -164,7 +164,7 @@ public class Solveur {
 
 	public ArrayList<String> getVariables(StatementPattern sp) throws MalformedQueryException{
 		ArrayList<String> variables = new ArrayList<>();
-		
+
 		if(!sp.getSubjectVar().hasValue()) {
 			variables.add(sp.getSubjectVar().getName());
 		}
@@ -182,270 +182,270 @@ public class Solveur {
 
 	public ArrayList<String> getConstantes(StatementPattern sp) throws MalformedQueryException{
 		ArrayList<String> constantes = new ArrayList<>();
-	
+
 		if(sp.getSubjectVar().hasValue()) {
 			constantes.add(sp.getSubjectVar().getValue().toString().replace("\"",""));
 		}
-	
+
 		if(sp.getPredicateVar().hasValue()) {
 			constantes.add(sp.getPredicateVar().getValue().toString().replace("\"",""));
 		}
-	
+
 		if(sp.getObjectVar().hasValue()) {
 			constantes.add(sp.getObjectVar().getValue().toString().replace("\"",""));
 		}
-		
-		
+
+
 		return constantes;
 	}
-	
+
 	public ArrayList<String> getStarVariables(String req) throws MalformedQueryException {
 		//les patterns sont récupérés
 		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
-	
+
 		//on initialise starVariables avec toutes les variables du premier pattern
 		ArrayList<String> starVariables = new ArrayList<>(getVariables(patterns.get(0)));
-	
+
 		//on fait l'intersection avec les variables de chaque pattern
 		for(StatementPattern sp : patterns) {
 			starVariables.retainAll(getVariables(sp));
 		}
 		return starVariables;
 	}
-    
-    public String getCommonVariable(HashMap<String,ArrayList<Integer>> first,HashMap<String,ArrayList<Integer>> second) {
-    	ArrayList<String> variables = new ArrayList<>(first.keySet());
-    	variables.retainAll(second.keySet());
-    	
-    	return variables.isEmpty()?"":variables.get(0);
-    }
-    
-    public ArrayList<ArrayList<String>> produitCartesien(ArrayList<ArrayList<String>> left,ArrayList<ArrayList<String>> right){
-    	ArrayList<ArrayList<String>> result = new ArrayList<>();
-    	result.add(new ArrayList<>());
-    	ArrayList<String> concat = left.get(0);
-    	concat.addAll(right.get(0));
-    	
-    	result.get(0).addAll(concat);
-    	
-    	int i = 0;
-    	for(ArrayList<String> leftLine : left) {
-    		int j = 0;
-    		for(ArrayList<String> rightLine : right){
-    			if(i!=0 && j!=0) {
-    				concat = new ArrayList<>(leftLine);
-        			concat.addAll(rightLine);
-        			result.add(concat);
-    			}
-    			
-    			j++;
-    		}
-    		i++;
-    	}
-    	
-    	return result;
-    }
+
+	public String getCommonVariable(HashMap<String,ArrayList<Integer>> first,HashMap<String,ArrayList<Integer>> second) {
+		ArrayList<String> variables = new ArrayList<>(first.keySet());
+		variables.retainAll(second.keySet());
+
+		return variables.isEmpty()?"":variables.get(0);
+	}
+
+	public ArrayList<ArrayList<String>> produitCartesien(ArrayList<ArrayList<String>> left,ArrayList<ArrayList<String>> right){
+		ArrayList<ArrayList<String>> result = new ArrayList<>();
+		result.add(new ArrayList<>());
+		ArrayList<String> concat = left.get(0);
+		concat.addAll(right.get(0));
+
+		result.get(0).addAll(concat);
+
+		int i = 0;
+		for(ArrayList<String> leftLine : left) {
+			int j = 0;
+			for(ArrayList<String> rightLine : right){
+				if(i!=0 && j!=0) {
+					concat = new ArrayList<>(leftLine);
+					concat.addAll(rightLine);
+					result.add(concat);
+				}
+
+				j++;
+			}
+			i++;
+		}
+
+		return result;
+	}
 
 	/**
 	 * Méthode M2a
 	 * @param req
 	 */
-    public void solve(String req) throws MalformedQueryException{
-    	long startTime = System.nanoTime();
+	public void solve(String req) throws MalformedQueryException{
+		long startTime = System.nanoTime();
 
-    	List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
-    	
-    	//1. regrouper les patterns connexes
-    	HashMap<StatementPattern,Integer> patternConnexes = new HashMap<>();
-    	
-    	int idx=0;
-    	//au début, un sp par case, puis on va les regrouper par composante connexe
-    	for(StatementPattern sp : patterns) {
-    		patternConnexes.put(sp,idx);
-    		idx++;
-    	}
-    	
-    	for(StatementPattern sp1 : patterns) {
-    		for(StatementPattern sp2 : patterns) {
-    			ArrayList<String> variablesSp1 = getVariables(sp1);
-    			ArrayList<String> variablesSp2 = getVariables(sp2);
-    			
-    			variablesSp1.retainAll(variablesSp2);
-    			
-    			//intersection non vide <=> il y a des variables communes entre sp1 et sp2
-    			if(!variablesSp1.isEmpty()) {
-    				patternConnexes.put(sp2,patternConnexes.get(sp1));
-    			}
-    		}
-    	}
-    	
-    	//toutes les composantes existantes
-    	ArrayList<Integer> allComposantes = new ArrayList<>(patternConnexes.values());
-    	
-    	//toutes les fusions de composantes seront stoquées ici :
-    	ArrayList<ArrayList<ArrayList<String>>> globalResult = new ArrayList<>();
-    	//pour chaque composante, on veut avoir un résultat partiel
-    	for(int composante : allComposantes) {
-    		
-    		//on récupère les sp de la composante actuelle
-    		ArrayList<StatementPattern> currentPatterns = new ArrayList<>();
-    		
-    		for(StatementPattern sp : patternConnexes.keySet()) {
-    			if(patternConnexes.get(sp).equals(composante)) {
-    				currentPatterns.add(sp);
-    			}
-    		}
-    		
-    		//les résultats de la composante actuelle seront d'abord stoqués ici
-    		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
-    		ArrayList<String> allVariable = new ArrayList<>();
-    		
-    		//on fait la résolution classique
-    		for(StatementPattern sp: currentPatterns) {
-                allResults.put(sp,new HashMap<>());
+		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
 
-                //on encode le pattern pour savoir quel index utiliser
-                String indexType = this.indexMap.get(this.encodePattern(sp));
-                Index index = this.indexes.get(indexType);
+		//1. regrouper les patterns connexes
+		HashMap<StatementPattern,Integer> patternConnexes = new HashMap<>();
 
-                ArrayList<String> variables = getVariables(sp);
-                ArrayList<String> constantes = getConstantes(sp);
+		int idx=0;
+		//au début, un sp par case, puis on va les regrouper par composante connexe
+		for(StatementPattern sp : patterns) {
+			patternConnexes.put(sp,idx);
+			idx++;
+		}
 
-                //on ajoute les variables dans la hashmap du pattern actuel
-                for(String v: variables) {
-                    if(!allVariable.contains(v)) {
-                        allVariable.add(v);
-                    }
-                    allResults.get(sp).put(v,new ArrayList<>());
-                }
+		for(StatementPattern sp1 : patterns) {
+			for(StatementPattern sp2 : patterns) {
+				ArrayList<String> variablesSp1 = getVariables(sp1);
+				ArrayList<String> variablesSp2 = getVariables(sp2);
 
-                if(constantes.size() == 2) { // deux constantes dans le pattern
-                    int c1 = this.dictionnaire.getValue(constantes.get(0));
-                    int c2 = this.dictionnaire.getValue(constantes.get(1));
+				variablesSp1.retainAll(variablesSp2);
 
-                    allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
-                }
-                else if(constantes.size() == 1) { // une constante dans le pattern
-                    int c1 = this.dictionnaire.getValue(constantes.get(0));
+				//intersection non vide <=> il y a des variables communes entre sp1 et sp2
+				if(!variablesSp1.isEmpty()) {
+					patternConnexes.put(sp2,patternConnexes.get(sp1));
+				}
+			}
+		}
 
-                    Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
-                    ArrayList<Integer> resO = new ArrayList();
-                    for (int i : keys_c1) {
-                        for(int j : index.getIndex().get(c1).get(i)) {
-                            allResults.get(sp).get(variables.get(0)).add(i);
-                            allResults.get(sp).get(variables.get(1)).add(j);
-                        }
-                    }
-                }
-                else {
-                    //Cas où il y a 3 variables
-                    //Choix de base SPO
-                    //TODO: normalement n'arrive jamais alors on enlève ?
-                    // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
-                    // TODO: Vérifier noms de variables
+		//toutes les composantes existantes
+		ArrayList<Integer> allComposantes = new ArrayList<>(patternConnexes.values());
 
-                    Index spo = this.indexes.get("spo");
+		//toutes les fusions de composantes seront stoquées ici :
+		ArrayList<ArrayList<ArrayList<String>>> globalResult = new ArrayList<>();
+		//pour chaque composante, on veut avoir un résultat partiel
+		for(int composante : allComposantes) {
 
-                    for(int s : spo.getIndex().keySet()) {
-                        for(int p : spo.getIndex().get(s).keySet()) {
-                            for(int o : spo.getIndex().get(s).get(p)) {
-                                allResults.get(sp).get(variables.get(0)).add(s);
-                                allResults.get(sp).get(variables.get(1)).add(p);
-                                allResults.get(sp).get(variables.get(2)).add(o);
-                            }
-                        }
-                    }
-                }
-            }
-    		//ici, allResult pour la composante actuelle est remplie.
-    		//On doit maintenant faire un merge
-    		ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>(allResults.values());
-    		
-    		while(toMerge.size()>1) {
-    			HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
-                HashMap<String,ArrayList<Integer>> second = toMerge.remove(0);
-                
-                String commonVariable = getCommonVariable(first,second);
-                
-                toMerge.add(this.mergeGeneral(first, second, commonVariable));
-    		}
-    		
-            //on reformate en matrice de String
-            ArrayList<ArrayList<String>> results = new ArrayList<>();
-            
-            //taille de la première colonne de la fusion des patterns courants
-            int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
-            //initialisation de chaque ligne de la matrice résultat
-            for(int i = 0; i<= size;i++) {
-                results.add(new ArrayList());
-            }
-            
-            for(String variable : toMerge.get(0).keySet()) {
-                int currentLine = 0;
-                results.get(currentLine).add(variable);
+			//on récupère les sp de la composante actuelle
+			ArrayList<StatementPattern> currentPatterns = new ArrayList<>();
 
-                for(int value : toMerge.get(0).get(variable)) {
-                    currentLine++;
-                    results.get(currentLine).add(this.dictionnaire.getValue(value));
-                }
-            }
-    		
-    		globalResult.add(results);
-    		
+			for(StatementPattern sp : patternConnexes.keySet()) {
+				if(patternConnexes.get(sp).equals(composante)) {
+					currentPatterns.add(sp);
+				}
+			}
 
-    		
-    	}
-    	
-    	
-    	//Faire un produit cartésien de chaque table : c'est les résultats
-    	
-    	while(globalResult.size()>1) {
-    		ArrayList<ArrayList<String>> left = globalResult.remove(0);
-    		ArrayList<ArrayList<String>> right = globalResult.remove(0);
-    		
-    		globalResult.add(produitCartesien(left,right));
-    	}
-    	
-    	ArrayList<ArrayList<String>> queryResult = globalResult.get(0);
-    	
-    	
-		 //Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
-        ArrayList<String> varToReturn = new ArrayList<>();
-        ParsedQuery pq = new SPARQLParser().parseQuery(req, null);
-        pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
-            public void meet(Projection projection) {
-                List<ProjectionElem> test = projection.getProjectionElemList().getElements();
-                for(ProjectionElem p: test){
-                    varToReturn.add(p.getSourceName());
-                }
-            }
-        });
+			//les résultats de la composante actuelle seront d'abord stoqués ici
+			HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
+			ArrayList<String> allVariable = new ArrayList<>();
 
-        ArrayList<Integer> indicesVariablesProjetees = new ArrayList<>();
-        for(int i = 0; i<queryResult.get(0).size();i++) {
-            if(varToReturn.contains(queryResult.get(0).get(i))) {
-                indicesVariablesProjetees.add(i);
-            }
-        }
-        
-        if(this.options.getVerbose()) {
-        	System.out.println("--------Résultats--------");
-            for (ArrayList<String> ligne : queryResult) {
-                for(int i = 0 ; i<ligne.size();i++) {
-                    if(indicesVariablesProjetees.contains(i)) {
-                        System.out.print(ligne.get(i)+", ");
-                    }
-                }
-                System.out.println();
-            }
-        }
-        
-        long timeSpent = System.nanoTime() - startTime;
+			//on fait la résolution classique
+			for(StatementPattern sp: currentPatterns) {
+				allResults.put(sp,new HashMap<>());
+
+				//on encode le pattern pour savoir quel index utiliser
+				String indexType = this.indexMap.get(this.encodePattern(sp));
+				Index index = this.indexes.get(indexType);
+
+				ArrayList<String> variables = getVariables(sp);
+				ArrayList<String> constantes = getConstantes(sp);
+
+				//on ajoute les variables dans la hashmap du pattern actuel
+				for(String v: variables) {
+					if(!allVariable.contains(v)) {
+						allVariable.add(v);
+					}
+					allResults.get(sp).put(v,new ArrayList<>());
+				}
+
+				if(constantes.size() == 2) { // deux constantes dans le pattern
+					int c1 = this.dictionnaire.getValue(constantes.get(0));
+					int c2 = this.dictionnaire.getValue(constantes.get(1));
+
+					allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
+				}
+				else if(constantes.size() == 1) { // une constante dans le pattern
+					int c1 = this.dictionnaire.getValue(constantes.get(0));
+
+					Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
+					ArrayList<Integer> resO = new ArrayList();
+					for (int i : keys_c1) {
+						for(int j : index.getIndex().get(c1).get(i)) {
+							allResults.get(sp).get(variables.get(0)).add(i);
+							allResults.get(sp).get(variables.get(1)).add(j);
+						}
+					}
+				}
+				else {
+					//Cas où il y a 3 variables
+					//Choix de base SPO
+					//TODO: normalement n'arrive jamais alors on enlève ?
+					// TODO: est-ce qu'il existe un plus optimisé qu'un autre?
+					// TODO: Vérifier noms de variables
+
+					Index spo = this.indexes.get("spo");
+
+					for(int s : spo.getIndex().keySet()) {
+						for(int p : spo.getIndex().get(s).keySet()) {
+							for(int o : spo.getIndex().get(s).get(p)) {
+								allResults.get(sp).get(variables.get(0)).add(s);
+								allResults.get(sp).get(variables.get(1)).add(p);
+								allResults.get(sp).get(variables.get(2)).add(o);
+							}
+						}
+					}
+				}
+			}
+			//ici, allResult pour la composante actuelle est remplie.
+			//On doit maintenant faire un merge
+			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>(allResults.values());
+
+			while(toMerge.size()>1) {
+				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
+				HashMap<String,ArrayList<Integer>> second = toMerge.remove(0);
+
+				String commonVariable = getCommonVariable(first,second);
+
+				toMerge.add(this.mergeGeneral(first, second, commonVariable));
+			}
+
+			//on reformate en matrice de String
+			ArrayList<ArrayList<String>> results = new ArrayList<>();
+
+			//taille de la première colonne de la fusion des patterns courants
+			int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
+			//initialisation de chaque ligne de la matrice résultat
+			for(int i = 0; i<= size;i++) {
+				results.add(new ArrayList());
+			}
+
+			for(String variable : toMerge.get(0).keySet()) {
+				int currentLine = 0;
+				results.get(currentLine).add(variable);
+
+				for(int value : toMerge.get(0).get(variable)) {
+					currentLine++;
+					results.get(currentLine).add(this.dictionnaire.getValue(value));
+				}
+			}
+
+			globalResult.add(results);
+
+
+
+		}
+
+
+		//Faire un produit cartésien de chaque table : c'est les résultats
+
+		while(globalResult.size()>1) {
+			ArrayList<ArrayList<String>> left = globalResult.remove(0);
+			ArrayList<ArrayList<String>> right = globalResult.remove(0);
+
+			globalResult.add(produitCartesien(left,right));
+		}
+
+		ArrayList<ArrayList<String>> queryResult = globalResult.get(0);
+
+
+		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
+		ArrayList<String> varToReturn = new ArrayList<>();
+		ParsedQuery pq = new SPARQLParser().parseQuery(req, null);
+		pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
+			public void meet(Projection projection) {
+				List<ProjectionElem> test = projection.getProjectionElemList().getElements();
+				for(ProjectionElem p: test){
+					varToReturn.add(p.getSourceName());
+				}
+			}
+		});
+
+		ArrayList<Integer> indicesVariablesProjetees = new ArrayList<>();
+		for(int i = 0; i<queryResult.get(0).size();i++) {
+			if(varToReturn.contains(queryResult.get(0).get(i))) {
+				indicesVariablesProjetees.add(i);
+			}
+		}
+
+		if(this.options.getVerbose()) {
+			System.out.println("--------Résultats--------");
+			for (ArrayList<String> ligne : queryResult) {
+				for(int i = 0 ; i<ligne.size();i++) {
+					if(indicesVariablesProjetees.contains(i)) {
+						System.out.print(ligne.get(i)+", ");
+					}
+				}
+				System.out.println();
+			}
+		}
+
+		long timeSpent = System.nanoTime() - startTime;
 		Integer tS = ((int)timeSpent/1000000);
-    	
-    }
 
-    /**
+	}
+
+	/**
 	 * Méthode M2b (optimisée)
 	 * @param req
 	 * @throws MalformedQueryException
@@ -767,123 +767,123 @@ public class Solveur {
 
 		return result;
 	}
-    
-    public HashMap<String,ArrayList<Integer>> mergeGeneral(HashMap<String,ArrayList<Integer>> left, HashMap<String,ArrayList<Integer>> right,String variableJointure){
 
-        HashMap<String,ArrayList<Integer>> result = new HashMap<>();
-        result.put(variableJointure,new ArrayList<>());
-        
-        //TODO considérer uniquement les variables que l'on doit projeter
-        ArrayList<String> varLeft = new ArrayList<>();
-        ArrayList<String> varRight = new ArrayList<>();
+	public HashMap<String,ArrayList<Integer>> mergeGeneral(HashMap<String,ArrayList<Integer>> left, HashMap<String,ArrayList<Integer>> right,String variableJointure){
 
-        int l_size = left.get(variableJointure).size();
-        int r_size = right.get(variableJointure).size();
+		HashMap<String,ArrayList<Integer>> result = new HashMap<>();
+		result.put(variableJointure,new ArrayList<>());
 
-        for(String k : left.keySet()) {
-            if(!k.equals(variableJointure)) {
-                varLeft.add(k);
-                result.put(k,new ArrayList<>());
-            }
-        }
+		//TODO considérer uniquement les variables que l'on doit projeter
+		ArrayList<String> varLeft = new ArrayList<>();
+		ArrayList<String> varRight = new ArrayList<>();
 
-        for(String k : right.keySet()) {
-            if(!k.equals(variableJointure)) {
-                varRight.add(k);
-                result.put(k,new ArrayList<>());
-            }
-        }
+		int l_size = left.get(variableJointure).size();
+		int r_size = right.get(variableJointure).size();
 
+		for(String k : left.keySet()) {
+			if(!k.equals(variableJointure)) {
+				varLeft.add(k);
+				result.put(k,new ArrayList<>());
+			}
+		}
 
-        for(int i=0 ; i<l_size ; i++) {
-        	for(int j=0 ; j<r_size ; j++) {
-        		if(left.get(variableJointure).get(i).equals(right.get(variableJointure).get(j))) {
-        			result.get(variableJointure).add(left.get(variableJointure).get(i));
-
-        			for(String var : varLeft) {
-        				result.get(var).add(left.get(var).get(i));
-        			}
-
-        			for(String var : varRight) {
-        				result.get(var).add(right.get(var).get(j));
-        			}
-        		}
-        	}
-        }
+		for(String k : right.keySet()) {
+			if(!k.equals(variableJointure)) {
+				varRight.add(k);
+				result.put(k,new ArrayList<>());
+			}
+		}
 
 
-        return result;
-    }
+		for(int i=0 ; i<l_size ; i++) {
+			for(int j=0 ; j<r_size ; j++) {
+				if(left.get(variableJointure).get(i).equals(right.get(variableJointure).get(j))) {
+					result.get(variableJointure).add(left.get(variableJointure).get(i));
 
-    public void displayHashMap(HashMap<String,ArrayList<Integer>> map) {
-        System.out.println("-----------------------");
-        for(String clef : map.keySet()) {
-            int maxValue = 10;
-            System.out.println(clef);
-            for(int value : map.get(clef)) {
-                if(maxValue>0) {
-                    System.out.println("\t=>"+dictionnaire.getValue(value));
-                    maxValue--;
-                }
-            }
-            System.out.println();
+					for(String var : varLeft) {
+						result.get(var).add(left.get(var).get(i));
+					}
 
-        }
-    }
+					for(String var : varRight) {
+						result.get(var).add(right.get(var).get(j));
+					}
+				}
+			}
+		}
+
+
+		return result;
+	}
+
+	public void displayHashMap(HashMap<String,ArrayList<Integer>> map) {
+		System.out.println("-----------------------");
+		for(String clef : map.keySet()) {
+			int maxValue = 10;
+			System.out.println(clef);
+			for(int value : map.get(clef)) {
+				if(maxValue>0) {
+					System.out.println("\t=>"+dictionnaire.getValue(value));
+					maxValue--;
+				}
+			}
+			System.out.println();
+
+		}
+	}
 
 
 	//TODO: à supprimer ?
-    public void jenaQueries(String queriesPath,String dataPath) {
-        Model model = ModelFactory.createDefaultModel();
-        InputStream in = FileManager.get().open(dataPath);
+	public void jenaQueries(String queriesPath,String dataPath) {
+		Model model = ModelFactory.createDefaultModel();
+		InputStream in = FileManager.get().open(dataPath);
 
-        model.read(in, null,"RDF/XML");
+		model.read(in, null,"RDF/XML");
 
-        try {
-            File myObj = new File(queriesPath);
-            Scanner myReader = new Scanner(myObj);
+		try {
+			File myObj = new File(queriesPath);
+			Scanner myReader = new Scanner(myObj);
 
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                Query query = QueryFactory.create(data);
-                QueryExecution qexec = QueryExecutionFactory.create(query,model);
-                try {
-                    ResultSet rs = qexec.execSelect();
-                    System.out.println("Query : "+data);
-                    ResultSetFormatter.out(System.out, rs, query);
-                    System.out.println();
+			while (myReader.hasNextLine()) {
+				String data = myReader.nextLine();
+				Query query = QueryFactory.create(data);
+				QueryExecution qexec = QueryExecutionFactory.create(query,model);
+				try {
+					ResultSet rs = qexec.execSelect();
+					System.out.println("Query : "+data);
+					ResultSetFormatter.out(System.out, rs, query);
+					System.out.println();
 
-                } finally {
-                    qexec.close();
-                }
+				} finally {
+					qexec.close();
+				}
 
-            }
+			}
 
-            //(String req,String dataPath,String queriesPath,String outputPath)
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-    }
+			//(String req,String dataPath,String queriesPath,String outputPath)
+			myReader.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	}
 
-    public String printRes(ArrayList<String> tab){
-        String res = "";
-        for(String i: tab){
-            res+=i+" ";
-        }
-        return res;
-    }
+	public String printRes(ArrayList<String> tab){
+		String res = "";
+		for(String i: tab){
+			res+=i+" ";
+		}
+		return res;
+	}
 
 
 	//TODO: à supprimer  ?
 	public void checkReq(String toCompare){
 		System.out.println(this.dictionnaire.getValue(toCompare));
 	}
-    public Options getOptions(){
-        return this.options;
-    }
-    
+	public Options getOptions(){
+		return this.options;
+	}
+
 	/**
 	 * Renvoie le CSV du résultat calculé par Jena d'une requete donnée
 	 * @param req
@@ -921,33 +921,33 @@ public class Solveur {
 		}
 	}
 
-    public void warm(float pct, ArrayList<String> queries, boolean optim_none, ArrayList<String> starVariables) throws MalformedQueryException {
-        Float queriesToExec=queries.size()*pct;
+	public void warm(float pct, ArrayList<String> queries, boolean optim_none, ArrayList<String> starVariables) throws MalformedQueryException {
+		Float queriesToExec=queries.size()*pct;
 
-        ArrayList<Integer> generated = new ArrayList<>();
-        for(int i=0; i<queriesToExec;i++){
-            Random r = new Random();
-            int c = r.nextInt(queries.size());
-            while(generated.contains(c)){
-                c = r.nextInt(queries.size());
-            }
-            generated.add(c);
+		ArrayList<Integer> generated = new ArrayList<>();
+		for(int i=0; i<queriesToExec;i++){
+			Random r = new Random();
+			int c = r.nextInt(queries.size());
+			while(generated.contains(c)){
+				c = r.nextInt(queries.size());
+			}
+			generated.add(c);
 
-            if(starVariables.size()==0) {
-                if (!optim_none) {
-                    System.out.println("OPTIM");
-                    solveOptim(queries.get(c));
-                } else {
-                    System.out.println("NAIVE");
-                    solve(queries.get(c));
-                }
-            }
-            else{
-                //TODO pbm
-                //solveStarQuery(queries.get(c));
-            }
-        }
-    }
+			if(starVariables.size()==0) {
+				if (!optim_none) {
+					System.out.println("OPTIM");
+					solveOptim(queries.get(c));
+				} else {
+					System.out.println("NAIVE");
+					solve(queries.get(c));
+				}
+			}
+			else{
+				//TODO pbm
+				//solveStarQuery(queries.get(c));
+			}
+		}
+	}
 
 	//TODO: factoriser?
 
@@ -1022,89 +1022,89 @@ public class Solveur {
 		return this.dictionnaire.getValue(res);
 	}
 
-    public void test(StatementPattern sp,HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults, String verbose, ArrayList<String> allVariable, ArrayList<String> starVariable){
-        allResults.put(sp,new HashMap<>());
+	public void test(StatementPattern sp,HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults, String verbose, ArrayList<String> allVariable, ArrayList<String> starVariable){
+		allResults.put(sp,new HashMap<>());
 
-        System.out.println("$$$ "+sp);
-        //on encode le pattern pour savoir quel index utiliser
-        String indexType = this.indexMap.get(this.encodePattern(sp));
+		System.out.println("$$$ "+sp);
+		//on encode le pattern pour savoir quel index utiliser
+		String indexType = this.indexMap.get(this.encodePattern(sp));
 
-        Index index = this.indexes.get(indexType);
+		Index index = this.indexes.get(indexType);
 
-        verbose+="  Index utilisé: " + indexType+"\n";
+		verbose+="  Index utilisé: " + indexType+"\n";
 
-        //les termes de la requete sont recuperes...
-        ArrayList<Var> varList = new ArrayList<>();
-        varList.add(sp.getSubjectVar());
-        varList.add(sp.getPredicateVar());
-        varList.add(sp.getObjectVar());
+		//les termes de la requete sont recuperes...
+		ArrayList<Var> varList = new ArrayList<>();
+		varList.add(sp.getSubjectVar());
+		varList.add(sp.getPredicateVar());
+		varList.add(sp.getObjectVar());
 
-        //...puis separes en constante / variable
-        ArrayList<String> variables = new ArrayList<>();
-        ArrayList<String> constantes = new ArrayList<>();
+		//...puis separes en constante / variable
+		ArrayList<String> variables = new ArrayList<>();
+		ArrayList<String> constantes = new ArrayList<>();
 
-        for(Var v : varList) {
-            if(v.hasValue()) {
-                constantes.add(v.getValue().toString().replace("\"",""));
-            }
-            else {
-                variables.add(v.getName());
-            }
-        }
+		for(Var v : varList) {
+			if(v.hasValue()) {
+				constantes.add(v.getValue().toString().replace("\"",""));
+			}
+			else {
+				variables.add(v.getName());
+			}
+		}
 
-        if(starVariable.isEmpty()) {
-            starVariable = (ArrayList<String>)variables.clone();
-        }
-        else {
-            starVariable.retainAll(variables);
-        }
+		if(starVariable.isEmpty()) {
+			starVariable = (ArrayList<String>)variables.clone();
+		}
+		else {
+			starVariable.retainAll(variables);
+		}
 
-        //on ajoute les variables dans la hashmap du pattern actuel
-        for(String v: variables) {
-            if(!allVariable.contains(v)) {
-                allVariable.add(v);
-            }
-            allResults.get(sp).put(v,new ArrayList<>());
-        }
+		//on ajoute les variables dans la hashmap du pattern actuel
+		for(String v: variables) {
+			if(!allVariable.contains(v)) {
+				allVariable.add(v);
+			}
+			allResults.get(sp).put(v,new ArrayList<>());
+		}
 
-        if(constantes.size() == 2) { // deux constantes dans le pattern
-            int c1 = this.dictionnaire.getValue(constantes.get(0));
-            int c2 = this.dictionnaire.getValue(constantes.get(1));
+		if(constantes.size() == 2) { // deux constantes dans le pattern
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
+			int c2 = this.dictionnaire.getValue(constantes.get(1));
 
-            allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
-        }
-        else if(constantes.size() == 1) { // une constante dans le pattern
-            int c1 = this.dictionnaire.getValue(constantes.get(0));
+			allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
+		}
+		else if(constantes.size() == 1) { // une constante dans le pattern
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
 
-            Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
-            ArrayList<Integer> resO = new ArrayList();
-            for (int i : keys_c1) {
-                for(int j : index.getIndex().get(c1).get(i)) {
-                    allResults.get(sp).get(variables.get(0)).add(i);
-                    allResults.get(sp).get(variables.get(1)).add(j);
-                }
-            }
-        }
-        else {
-            //Cas où il y a 3 variables
-            //Choix de base SPO
-            //TODO: normalement n'arrive jamais alors on enlève ?
-            // TODO: est-ce qu'il existe un plus optimisé qu'un autre?
-            // TODO: Vérifier noms de variables
+			Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
+			ArrayList<Integer> resO = new ArrayList();
+			for (int i : keys_c1) {
+				for(int j : index.getIndex().get(c1).get(i)) {
+					allResults.get(sp).get(variables.get(0)).add(i);
+					allResults.get(sp).get(variables.get(1)).add(j);
+				}
+			}
+		}
+		else {
+			//Cas où il y a 3 variables
+			//Choix de base SPO
+			//TODO: normalement n'arrive jamais alors on enlève ?
+			// TODO: est-ce qu'il existe un plus optimisé qu'un autre?
+			// TODO: Vérifier noms de variables
 
-            Index spo = this.indexes.get("spo");
+			Index spo = this.indexes.get("spo");
 
-            for(int s : spo.getIndex().keySet()) {
-                for(int p : spo.getIndex().get(s).keySet()) {
-                    for(int o : spo.getIndex().get(s).get(p)) {
-                        allResults.get(sp).get(variables.get(0)).add(s);
-                        allResults.get(sp).get(variables.get(1)).add(p);
-                        allResults.get(sp).get(variables.get(2)).add(o);
-                    }
-                }
-            }
-        }
-    }
+			for(int s : spo.getIndex().keySet()) {
+				for(int p : spo.getIndex().get(s).keySet()) {
+					for(int o : spo.getIndex().get(s).get(p)) {
+						allResults.get(sp).get(variables.get(0)).add(s);
+						allResults.get(sp).get(variables.get(1)).add(p);
+						allResults.get(sp).get(variables.get(2)).add(o);
+					}
+				}
+			}
+		}
+	}
 
 	public Map<String,ArrayList<Integer>> sortMergeJoin(Integer[][] left, Integer[][] right, String variable){
 		//Liste des r�sultats (x : < 1,2...>)

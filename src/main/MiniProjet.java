@@ -28,7 +28,7 @@ public class MiniProjet {
 		options.setVerbose(true);
 
 		options.setJena(true);
-		
+
 		//à commenter
 		//options.setOptim_none(true);
 
