@@ -54,6 +54,7 @@ public class Index {
 	}
 
 	public void addRec(int i1, int i2, int i3) {
+		//TODO: il faut pas la condition pour créer les index 2 et 1 ?
 		if(!this.index.containsKey(i1))
 			this.index.put(i1,new HashMap<>());
 		
