@@ -93,7 +93,9 @@ public class Solveur {
 			ArrayList<String> queries = new ArrayList<>();
 			while (myReader.hasNextLine()) {
 				String data = myReader.nextLine();
-				queries.add(data);
+				if(!data.equals("")) {
+					queries.add(data);
+				}
 			}
 			long timeSpent_i = System.nanoTime() - startTime_i;
 			this.stats.setQueriesReadTime((int)timeSpent_i/1000000);
