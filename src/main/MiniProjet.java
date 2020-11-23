@@ -30,7 +30,7 @@ public class MiniProjet {
 		options.setJena(true);
 
 		//à commenter
-		//options.setOptim_none(true);
+		options.setOptim_none(false);
 
 		//à commenter
 		//options.setDataPath("datasets/1M.rdfxml.rdf");
