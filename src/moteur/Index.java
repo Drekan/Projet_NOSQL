@@ -1,6 +1,7 @@
 package moteur;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,7 @@ public class Index {
 	 * Index (po, sop, pso, pos, osp, ops)
 	 */
 	private Map<Integer, Map<Integer, ArrayList<Integer>>> index;
+	private Integer[][] indexForMergeJoin;
 
 	/**
 	 * Index (sp, so, os, op, po, ps) - nombre d'occurences
@@ -43,6 +45,7 @@ public class Index {
 		this.index1 = new HashMap<>();
 		this.index2 = new HashMap<>();
 		this.valuesNumber = 0;
+		this.indexForMergeJoin = null;
 	}
 
 	public HashMap<Integer, HashMap<Integer, Integer>> getIndex2(){
@@ -57,10 +60,10 @@ public class Index {
 		//TODO: il faut pas la condition pour crÃ©er les index 2 et 1 ?
 		if(!this.index.containsKey(i1))
 			this.index.put(i1,new HashMap<>());
-		
+
 		if(!this.index.get(i1).containsKey(i2))
 			this.index.get(i1).put(i2,new ArrayList<>());
-		
+
 		if(!this.index.get(i1).get(i2).contains(i3)) {
 			this.index.get(i1).get(i2).add(i3);
 			this.valuesNumber++;
@@ -76,7 +79,7 @@ public class Index {
 
 		if(!this.index1.containsKey(i1))
 			this.index1.put(i1,0);
-		
+
 		this.index1.put(i1, this.index1.get(i1)+1);
 	}
 
@@ -148,7 +151,7 @@ public class Index {
 	/**
 	 * Utile pour le sort-merge-join de la mÃ©thode optimisÃ©e
 	 */
-	public void sortIndex() {
+	public void sortIndexbyKey() {
 		//Crï¿½ation du nouvel index
 		Map<Integer, Map<Integer, ArrayList<Integer>>> sortIndex = new TreeMap<Integer, Map<Integer, ArrayList<Integer>>>();
 		for(Integer key1 : index.keySet()) {
@@ -164,6 +167,35 @@ public class Index {
 		//Modification de l'ancien index
 		index = sortIndex;
 	}
+
+
+
+	public void sortForMergeJoin() {
+		//Génération du nouvel index
+		indexForMergeJoin = new Integer[valuesNumber][3];
+		int i = 0;
+		for(Integer key1 : index.keySet()) {
+			Map<Integer, ArrayList<Integer>> sortSousIndex = index.get(key1);
+			for(Integer key2 : sortSousIndex.keySet()) {
+				ArrayList<Integer> sortArrayList = index.get(key1).get(key2);
+				for(Integer value : sortArrayList) {
+					Integer[] res = {key1, key2, value};
+					indexForMergeJoin[i] = res;
+					i++;
+				}
+			}
+		}
+
+		//Tri par la 3ème colonne
+		Arrays.sort(indexForMergeJoin, (a, b) -> Double.compare(a[2], b[2]));
+
+		//Test affichage
+		/*for(i=0; i<indexForMergeJoin.length; i++) {
+			System.out.println(indexForMergeJoin[i][0]+", "+indexForMergeJoin[i][1]+", "+indexForMergeJoin[i][2]);
+		}*/
+
+	}
+
 
 
 	public void printIndex() {

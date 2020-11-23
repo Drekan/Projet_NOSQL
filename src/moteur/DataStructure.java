@@ -33,7 +33,7 @@ public class DataStructure {
 	}
 
 	public void createDico(Boolean triLexicographique, Statistics stats){
-        long startTime_d = System.nanoTime();
+		long startTime_d = System.nanoTime();
 
 		this.dico = new Dictionnaire(triLexicographique);
 
@@ -60,14 +60,14 @@ public class DataStructure {
 		} catch (Exception e) {
 
 		}
-        long timeSpent_d = System.nanoTime() - startTime_d;
+		long timeSpent_d = System.nanoTime() - startTime_d;
 		stats.setDicCreationTime((int)timeSpent_d/1000000);
 	}
 
 	public void createIndexes(Statistics stats) { //TODO: verbose
-        long startTime_i = System.nanoTime();
+		long startTime_i = System.nanoTime();
 
-        String verbose = "";
+		String verbose = "";
 
 		this.indexes.put("spo",new Index("spo"));
 		this.indexes.put("sop",new Index("sop"));
