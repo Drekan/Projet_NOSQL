@@ -22,8 +22,8 @@ public class Dictionnaire {
 
 
 	public Dictionnaire(Boolean sort) {
-		this.intToString_dico = new HashMap<Integer,String>();
-		this.stringToInt_dico = new HashMap<String,Integer>();
+		this.intToString_dico = new HashMap<>();
+		this.stringToInt_dico = new HashMap<>();
 		this.sortedRessources = new ArrayList<>();
 		this.tuples = new ArrayList<>();
 		this.lexicographical_sort = sort;
@@ -41,8 +41,7 @@ public class Dictionnaire {
 	 */
 	public void add(String s,String p,String o) {
 		this.tuples.add(new String[] {s,p,o});
-		if(this.lexicographical_sort) {	
-
+		if(this.lexicographical_sort) {
 			addDistinct(s);
 			addDistinct(p);
 			addDistinct(o);

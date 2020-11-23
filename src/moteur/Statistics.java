@@ -114,7 +114,6 @@ public class Statistics {
 		this.queriesPath = queriesPath;
 	}
 
-	//TODO: écrire à la suite ou pas ?
 	public void writeStats() {
 		try {
 			FileWriter myWriter = new FileWriter(outputPath+"queriesStat.csv");
