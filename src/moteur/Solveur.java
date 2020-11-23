@@ -227,6 +227,20 @@ public class Solveur {
     	
     	return variables.isEmpty()?"":variables.get(0);
     }
+    
+    public ArrayList<ArrayList<String>> produitCartesien(ArrayList<ArrayList<String>> left,ArrayList<ArrayList<String>> right){
+    	ArrayList<ArrayList<String>> result = new ArrayList<>();
+    	
+    	for(ArrayList<String> leftLine : left) {
+    		for(ArrayList<String> rightLine : right){
+    			ArrayList<String> concat = new ArrayList<>(leftLine);
+    			concat.addAll(rightLine);
+    			result.add(concat);
+    		}
+    	}
+    	
+    	return result;
+    }
 
 
     public void solve(String req) throws MalformedQueryException{
@@ -371,8 +385,18 @@ public class Solveur {
     		
     	}
     	
-    	//2. Merge chaque composante (donc trouver une colonne sur laquelle on peut merge)
-    	//3. Faire un produit cartésien de chaque table : c'est les résultats
+    	
+    	//Faire un produit cartésien de chaque table : c'est les résultats
+    	
+    	while(globalResult.size()>1) {
+    		ArrayList<ArrayList<String>> left = globalResult.remove(0);
+    		ArrayList<ArrayList<String>> right = globalResult.remove(0);
+    		
+    		globalResult.add(produitCartesien(left,right));
+    	}
+    	
+    	ArrayList<ArrayList<String>> queryResult = globalResult.get(0);
+    	
     }
 
     //Solve optimisé
