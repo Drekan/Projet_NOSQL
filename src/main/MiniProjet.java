@@ -22,7 +22,7 @@ public class MiniProjet {
 		long startTime_i = System.nanoTime();
 
 		//I. Définition des options
-		Options options = new Options("");
+		Options options = new Options(args);
 
 		//Options à commenter
 		/*

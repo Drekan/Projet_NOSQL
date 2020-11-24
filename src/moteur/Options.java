@@ -1,5 +1,7 @@
 package moteur;
 
+import java.util.Arrays;
+
 public class Options {
 	String queriesPath;
 	String dataPath;
@@ -125,7 +127,7 @@ public class Options {
 		}
 	}
 
-	public Options(String line){
+	public Options(String[] args){
 		this.queriesPath="queries.txt";
 		this.dataPath="datasets/100K.rdfxml";
 		this.outputPath="results/";
@@ -140,6 +142,7 @@ public class Options {
 		this.star_queries=false;
 		this.diagnostic=false;
 
+		String line = Arrays.toString(args);
 		String[] options = line.split("-");
 		for(String opt: options){
 			if(opt.contains("queries")){
@@ -155,29 +158,29 @@ public class Options {
                     this.setOutputPath(otp[1]);
                 }
 			}
-			if(opt.equals("verbose")){
+			if(opt.contains("verbose")){
 				this.setVerbose(true);
 			}
-			if(opt.equals("export_query_stats")){
+			if(opt.contains("export_query_stats")){
 				this.setExport_query_stats(true);
 			}
-			if(opt.equals("export_query_results")){
+			if(opt.contains("export_query_results")){
 				this.setExport_query_results(true);
 			}
-			if(opt.equals("jena")){
+			if(opt.contains("jena")){
 				this.setJena(true);
 			}
-			if(opt.equals("shuffle")){
+			if(opt.contains("shuffle")){
 				this.setShuffle(true);
 			}
 			if(opt.contains("warm")){
 				//TODO: à vérifier que ça marche bien
 				this.setWarmPct(Float.parseFloat(opt.split("\\s+")[1]));
 			}
-			if(opt.equals("optim_none")){
+			if(opt.contains("optim_none")){
 				this.setOptim_none(true);
 			}
-			if(opt.equals("star_queries")){
+			if(opt.contains("star_queries")){
 				this.setStar_queries(true);
 			}
 		}
