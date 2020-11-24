@@ -4,6 +4,7 @@ public class Options {
 	String queriesPath;
 	String dataPath;
 	String outputPath;
+	Boolean output;
 	Boolean verbose;
 	Boolean export_query_stats;
 	Boolean export_query_results;
@@ -12,6 +13,7 @@ public class Options {
 	float warmPct;
 	Boolean optim_none;
 	Boolean star_queries;
+	Boolean diagnostic;
 
 	public String getQueriesPath() {
 		return queriesPath;
@@ -28,6 +30,10 @@ public class Options {
 	public Boolean getVerbose() {
 		return verbose;
 	}
+
+	public Boolean getOutput(){
+	    return output;
+    }
 
 	public Boolean getExport_query_stats() {
 		return export_query_stats;
@@ -56,6 +62,10 @@ public class Options {
 	public Boolean getStar_queries() {
 		return star_queries;
 	}
+	
+	public Boolean getDiagnostic() {
+		return this.diagnostic;
+	}
 
 
 	public void setQueriesPath(String queriesPath) {
@@ -70,6 +80,9 @@ public class Options {
 		this.outputPath = outputPath;
 	}
 
+	public void setOutput(Boolean output ){
+	    this.output = output;
+    }
 	public void setVerbose(Boolean verbose) {
 		this.verbose = verbose;
 	}
@@ -101,11 +114,22 @@ public class Options {
 	public void setStar_queries(Boolean star_queries) {
 		this.star_queries = star_queries;
 	}
+	
+	public void setDiagnostic(Boolean diag) {
+		this.diagnostic = diag;
+	}
+
+	public void diagnostic(String diagnostic){
+		if(this.diagnostic){
+			System.out.println(diagnostic);
+		}
+	}
 
 	public Options(String line){
 		this.queriesPath="queries.txt";
 		this.dataPath="datasets/100K.rdfxml";
 		this.outputPath="results/";
+		this.output=false;
 		this.verbose=false;
 		this.export_query_stats=false;
 		this.export_query_results=false;
@@ -114,6 +138,7 @@ public class Options {
 		this.warmPct=0;
 		this.optim_none=false;
 		this.star_queries=false;
+		this.diagnostic=false;
 
 		String[] options = line.split("-");
 		for(String opt: options){
@@ -124,7 +149,11 @@ public class Options {
 				this.setDataPath(opt.split("\"")[1]);
 			}
 			if(opt.contains("output")){
-				this.setOutputPath(opt.split("\"")[1]);
+			    this.setOutput(true);
+			    String[] otp = opt.split("\"");
+			    if(otp.length==2){
+                    this.setOutputPath(otp[1]);
+                }
 			}
 			if(opt.equals("verbose")){
 				this.setVerbose(true);

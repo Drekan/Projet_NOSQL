@@ -112,18 +112,18 @@ public class Solveur {
 			if(this.options.getExport_query_stats()){
 				File stats = new File (this.options.getOutputPath()+"queryStat.csv");
 				if(stats.delete()){
-					System.out.println(stats.getName() + " est supprimé.");
+					this.options.diagnostic(stats.getName() + " est supprimé.");
 				}else{
-					System.out.println("Opération de suppression echouée");
+					this.options.diagnostic("Opération de suppression echouée");
 				}
 			}
 
 			if(this.options.getExport_query_results()){
 				File result = new File (this.options.getOutputPath()+"queryResult.csv");
 				if(result.delete()){
-					System.out.println(result.getName() + " est supprimé.");
+					this.options.diagnostic(result.getName() + " est supprimé.");
 				}else{
-					System.out.println("Opération de suppression echouée");
+					this.options.diagnostic("Opération de suppression echouée");
 				}
 			}
 		}
@@ -132,8 +132,13 @@ public class Solveur {
 		}
 	}
 
+	/**
+	 * Permet de
+	 * @param timeSpent
+	 * @return
+	 */
 	public static int timeSec(long timeSpent){
-		return (int)timeSpent/1000000;
+		return (int)(timeSpent/1000000);
 	}
 
 	/**
@@ -152,46 +157,64 @@ public class Solveur {
 		}
 
 		if(this.options.getShuffle()) {
-			System.out.println("Shuffle");
+			this.options.diagnostic("Shuffle");
 			Collections.shuffle(queries);
 		}
 
 		long startTime_i = System.nanoTime();
 
 		for(String query: queries) {
+			this.options.diagnostic("\n-------------------------");
+			this.options.diagnostic("Q : "+query);
+
 			if(isValid(query)) {
 				ArrayList<String> starVariables = getStarVariables(query);
 				if(starVariables.size()==0) {
 					if (!optim_none) {
-						System.out.println("OPTIM"); //TODO: verbose
+						this.options.diagnostic("- M2b");
 						solveOptim(query);
 					} else {
-						System.out.println("NAIVE");
+						this.options.diagnostic("- M2a");
 						solve(query);
 					}
 				}
 				else{
-					System.out.println("STAR QUERY");
+					this.options.diagnostic("- M1");
 					solveStarQuery(query,starVariables);
+				}
+			}else {
+				if(this.options.getVerbose()) {
+					System.out.println("\t-> non valide (contient des ressources non présentes dans le dataset)");
 				}
 			}
 
 		}
+
 		long timeSpent = System.nanoTime() - startTime_i;
-		//TODO: on a pas pris en compte le warm ou quoi ?
 		this.stats.setWorkloadEvaluationTime(timeSec(timeSpent));
 		this.stats.setQueriesNum(queries.size());
 		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
 
-		//TODO: est-ce bien cette fonction ?
-		//if(options.getExport_query_stats()){
-		this.stats.writeStats();
-		//}
+		/*
+		if(options.getJena()) {
+			System.out.println("\n---Jena---");
+			for(String query: queries) {
+				System.out.println(jenaSolve(query));
+			}
+		}
+		 */
+		if(options.getOutput()){
+			this.stats.writeStats();
+		}
+
+		if(options.getVerbose()) {
+			this.options.diagnostic("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
+		}
 	}
-	
+
 	public Boolean isValid(String query) throws MalformedQueryException {
 		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(query, null).getTupleExpr());
-		
+
 		for(StatementPattern sp : patterns) {
 			ArrayList<String> constantes = getConstantes(sp);
 			for(String c : constantes) {
@@ -200,7 +223,7 @@ public class Solveur {
 				}
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -400,7 +423,7 @@ public class Solveur {
 
 			while(toMerge.size()>1) {
 				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
-				
+
 				HashMap<String,ArrayList<Integer>> second = new HashMap<>();
 				int idx_second = 0;
 				String commonVariable = "";
@@ -469,25 +492,22 @@ public class Solveur {
 				indicesVariablesProjetees.add(i);
 			}
 		}
-		
+
 		long timeSpent = System.nanoTime();
 		timeSpent = (timeSpent-startTime);
-		System.out.println("TEMPS= "+ timeSpent + "ms");
+		this.options.diagnostic("TEMPS= "+ timeSpent + "ms");
 
-		if(this.options.getVerbose()) {
-			System.out.println("--------Résultats--------");
-			for (ArrayList<String> ligne : queryResult) {
-				for(int i = 0 ; i<ligne.size();i++) {
-					if(indicesVariablesProjetees.contains(i)) {
-						System.out.print(ligne.get(i)+", ");
-					}
+		this.options.diagnostic("--------Résultats--------");
+		for (ArrayList<String> ligne : queryResult) {
+			for(int i = 0 ; i<ligne.size();i++) {
+				if(indicesVariablesProjetees.contains(i)) {
+					this.options.diagnostic(ligne.get(i)+", ");
 				}
-				System.out.println();
 			}
+			this.options.diagnostic("\n");
 		}
-
 	}
-	
+
 	public HashMap<StatementPattern,Integer> buildComposantesConnexes(List<StatementPattern> patterns) throws MalformedQueryException{
 		HashMap<StatementPattern,Integer> patternConnexes = new HashMap<>();
 		int idx=0;
@@ -510,11 +530,11 @@ public class Solveur {
 				}
 			}
 		}
-		
+
 		return patternConnexes;
 	}
-	
-	
+
+
 
 	/**
 	 * Méthode M2b (optimisée)
@@ -526,14 +546,14 @@ public class Solveur {
 
 		//2.pour chaque pattern p (par ordre spécifié en 1] ) 
 		//pour chaque variable v de p, faire
-			//- si la clef v existe dans la mémoire, alors on ajoute les tuples contenant v aux résultats de p
-			//  seulement si la valeur v est déjà en mémoire
-			
-			//- sinon, drame : il faut ajouter la clef v à la mémoire ET pour chaque tuple, ajouter la valeur de v
-			//- à la mémoire et aux résultats
-	
-	// objets : -résultats de p     -mémoire
-		
+		//- si la clef v existe dans la mémoire, alors on ajoute les tuples contenant v aux résultats de p
+		//  seulement si la valeur v est déjà en mémoire
+
+		//- sinon, drame : il faut ajouter la clef v à la mémoire ET pour chaque tuple, ajouter la valeur de v
+		//- à la mémoire et aux résultats
+
+		// objets : -résultats de p     -mémoire
+
 		//3. (osef de la mémoire ici)
 		//   Ici, il faut fusionner les résultats de tous les patterns.
 		// 	 Dans un premier temps, on fusionne ce qu'il est possible de fusionner,
@@ -551,14 +571,17 @@ public class Solveur {
 		 * 
 		 * 
 		 */
-		
+
 		//4. aggréger les résultats de chaque composante c1 c2
-		
+
 		//TODO: merge join
+
+
 		long startTime = System.nanoTime();
 		String outputPath = this.options.getOutputPath();
-		String verbose ="";
-		verbose+="\nRequete: "+req+"\n";
+		this.options.diagnostic("\nRequete: "+req+"\n");
+
+		long resultatsPartielsStart = System.nanoTime();
 
 		SPARQLParser sparqlParser = new SPARQLParser();
 		ParsedQuery pq = sparqlParser.parseQuery(req, null);
@@ -566,33 +589,48 @@ public class Solveur {
 
 		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
 
-		verbose+="-- Lecture de chaque pattern par sélectivité croissante"+"\n";
+		this.options.diagnostic("-- Lecture de chaque pattern par sélectivité croissante"+"\n");
 
 		//1. Sélectionner les pattern par valeur de sélectivité croissante
-		
+
 		HashMap<StatementPattern, Double> selectivities = new HashMap<>();
 		for(StatementPattern sp: patterns) {
 			selectivities.put(sp,selectivity(sp));
 		}
+
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
 
 		HashMap<String, ArrayList<Integer>> resultsPerVariable = new HashMap<>();
 
+
 		//2. résultat de chaque pattern
 		HashMap<StatementPattern,HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
-		
+
 		while(alreadySolved.size()<patterns.size()) {
 			//TODO: vérifier que ça marche
 			StatementPattern spCurrent = minSelectivity(alreadySolved, selectivities);
-			
+
 			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
 		}
-		
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
+		}
+
+		long composantesConnexesStart = System.nanoTime();
+
 		HashMap<StatementPattern,Integer> patternConnexes = buildComposantesConnexes(patterns);
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Calcul des composantes connexes : "+((System.nanoTime()-composantesConnexesStart)/1000000)+"ms]");
+		}
+
+		long mergeStart = System.nanoTime();
+
 		ArrayList<ArrayList<ArrayList<String>>> mergedComponents = new ArrayList<>();
 		for(int composante : patternConnexes.values()) {
 			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
-			
+
 			//on ajoute les patterns de même composante à toMerge
 			for(StatementPattern sp : patternConnexes.keySet()) {
 				if(patternConnexes.get(sp).equals(composante)) {
@@ -602,7 +640,7 @@ public class Solveur {
 
 			while(toMerge.size()>1) {
 				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
-				
+
 				HashMap<String,ArrayList<Integer>> second = new HashMap<>();
 				int idx_second = 0;
 				String commonVariable = "";
@@ -616,7 +654,7 @@ public class Solveur {
 
 				toMerge.add(this.mergeGeneral(first, second, commonVariable));
 			}
-			
+
 			//on reformate en matrice de String
 			ArrayList<ArrayList<String>> merged = new ArrayList<>();
 
@@ -637,9 +675,15 @@ public class Solveur {
 				}
 			}
 
-			mergedComponents.add(merged);		
+			mergedComponents.add(merged);
 		}
-		
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Merge des résultats partiels : "+((System.nanoTime()-mergeStart)/1000000)+"ms]");
+		}
+
+		long produitCartesienStart = System.nanoTime();
+
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
 			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
@@ -649,6 +693,11 @@ public class Solveur {
 
 		ArrayList<ArrayList<String>> queryResult = mergedComponents.get(0);
 
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Produit cartésien de chaque composante : "+((System.nanoTime()-produitCartesienStart)/1000000)+"ms]");
+		}
+
+		long formattageResultatStart = System.nanoTime();
 
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
 		ArrayList<String> varToReturn = new ArrayList<>();
@@ -667,24 +716,30 @@ public class Solveur {
 				indicesVariablesProjetees.add(i);
 			}
 		}
-		
+
 		long timeSpent = System.nanoTime();
 		timeSpent = (timeSpent-startTime);
 		Integer tS = ((int)timeSpent/1000000);
-		
-		if(this.options.getVerbose()) {
-			System.out.println("--------Résultats--------");
-			for (ArrayList<String> ligne : queryResult) {
-				for(int i = 0 ; i<ligne.size();i++) {
-					if(indicesVariablesProjetees.contains(i)) {
-						System.out.print(ligne.get(i)+", ");
-					}
+
+		this.options.diagnostic("--------Résultats--------");
+		for (ArrayList<String> ligne : queryResult) {
+			for(int i = 0 ; i<ligne.size();i++) {
+				if(indicesVariablesProjetees.contains(i)) {
+					this.options.diagnostic(ligne.get(i)+", ");
 				}
-				System.out.println();
 			}
+			this.options.diagnostic("\n");
+
+			if(this.options.getDiagnostic()) {
+				this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
+			}
+
+
+			this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
+
 		}
-		
-		
+
+
 		//sortMergeJoin();
 
 
@@ -719,13 +774,10 @@ public class Solveur {
 				jenaString="False";
 			}
 		}
-
-
 	}
 
 	//Avoir la meme taille pour les AL dans results
 	public HashMap<String, ArrayList<Integer>> getResult(StatementPattern sp, HashMap<String, ArrayList<Integer>> memory) throws MalformedQueryException {
-		String verbose = "";
 		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
 		ArrayList<String> allVariable = new ArrayList<>();
 		//on encode le pattern pour savoir quel index utiliser
@@ -733,7 +785,7 @@ public class Solveur {
 		String indexType = this.indexMap.get(this.encodePattern(sp));
 		Index index = this.indexes.get(indexType);
 
-		verbose+="  Index utilisé: " + indexType+"\n";
+		this.options.diagnostic("  Index utilisé: " + indexType+"\n");
 
 		ArrayList<String> variables = getVariables(sp);
 		ArrayList<String> constantes = getConstantes(sp);
@@ -745,11 +797,11 @@ public class Solveur {
 			}
 			res.put(v,new ArrayList<>());
 		}
-		
+
 		if(constantes.size() == 2) { // deux constantes dans le pattern
 			int c1 = this.dictionnaire.getValue(constantes.get(0));
 			int c2 = this.dictionnaire.getValue(constantes.get(1));
-			
+
 			if(!memory.containsKey(variables.get(0))) {
 				memory.put(variables.get(0), new ArrayList<>());
 				memory.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
@@ -759,28 +811,28 @@ public class Solveur {
 					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
 				}
 			}
-			
-			
-			
+
+
+
 		}
 		else if(constantes.size() == 1) { // une constante dans le pattern
-			
+
 			int c1 = this.dictionnaire.getValue(constantes.get(0));
-			
+
 			Boolean firstTime_v1 = !memory.containsKey(variables.get(0));
 			Boolean firstTime_v2 = !memory.containsKey(variables.get(1));
-			
+
 			if(firstTime_v1) {
 				memory.put(variables.get(0), new ArrayList<>());
 			}
-			
+
 			if(firstTime_v2) {
 				memory.put(variables.get(1), new ArrayList<>());
 			}
-			
+
 			Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
 			for (int i : keys_c1) {
-				
+
 				if(firstTime_v1) {
 					memory.get(variables.get(0)).add(i);
 				}
@@ -791,14 +843,14 @@ public class Solveur {
 						if(firstTime_v2) {
 							memory.get(variables.get(1)).add(j);
 						}
-						
+
 						if(memory.get(variables.get(1)).contains(j)) {
 							res.get(variables.get(0)).add(i);
 							res.get(variables.get(1)).add(j);
 						}
 					}
 				}
-				
+
 			}
 		}
 		else {
@@ -840,8 +892,7 @@ public class Solveur {
 	public void solveStarQuery(String req, ArrayList<String> starVariables) throws MalformedQueryException {
 		long startTime = System.nanoTime();
 		String outputPath = this.options.getOutputPath();
-		String verbose ="";
-		verbose+="\nRequete: "+req+"\n";
+		this.options.diagnostic("\nRequete: "+req+"\n");
 
 		//Utilisation d'une instance de SPARLQLParser
 		SPARQLParser sparqlParser = new SPARQLParser();
@@ -853,7 +904,7 @@ public class Solveur {
 		//Clé = la valeur recherchée
 		//Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
 
-		verbose+="-- Lecture de chaque pattern"+"\n";
+		this.options.diagnostic("-- Lecture de chaque pattern"+"\n");
 
 		ArrayList<String> allVariable = new ArrayList<>();
 		for(StatementPattern sp: patterns) {
@@ -863,7 +914,7 @@ public class Solveur {
 			String indexType = this.indexMap.get(this.encodePattern(sp));
 			Index index = this.indexes.get(indexType);
 
-			verbose+="  Index utilisé: " + indexType+"\n";
+			this.options.diagnostic("  Index utilisé: " + indexType+"\n");
 
 			ArrayList<String> variables = getVariables(sp);
 			ArrayList<String> constantes = getConstantes(sp);
@@ -926,7 +977,7 @@ public class Solveur {
 
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
 		ArrayList<String> varToReturn = new ArrayList<>();
-		verbose+="-- Résultat de la requete"+"\n";
+		this.options.diagnostic("-- Résultat de la requete"+"\n");
 		pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
 			public void meet(Projection projection) {
 				List<ProjectionElem> test = projection.getProjectionElemList().getElements();
@@ -946,17 +997,14 @@ public class Solveur {
 		long timeSpent = System.nanoTime() - startTime;
 		Integer tS = ((int)timeSpent/1000000);
 
-		if(this.options.getVerbose()){
-			System.out.println(verbose);
-			System.out.println("--------Résultats--------");
-			for (ArrayList<String> ligne : results) {
-				for(int i = 0 ; i<ligne.size();i++) {
-					if(indicesVariablesProjetees.contains(i)) {
-						System.out.print(ligne.get(i)+", ");
-					}
+		this.options.diagnostic("--------Résultats--------");
+		for (ArrayList<String> ligne : results) {
+			for(int i = 0 ; i<ligne.size();i++) {
+				if(indicesVariablesProjetees.contains(i)) {
+					this.options.diagnostic(ligne.get(i)+", ");
 				}
-				System.out.println();
 			}
+			this.options.diagnostic("\n");
 		}
 
 		//On construit une chaine de caractères sous format CSV de nos résultats
@@ -989,12 +1037,13 @@ public class Solveur {
 				myWriter.write(req+"\n"+CSVResults); //TODO: à vérifier
 				myWriter.close();
 			} catch (IOException e) {
-				System.out.println("Erreur dans l'écriture du résultat de la requête");
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
 				e.printStackTrace();
 			}
 		}
 
 		writeQueryStat(req, tS.toString(),"","","",jenaString); //TODO
+
 	}
 
 	//TODO : dans le cas où toutes les variables ne sont pas à projeter, éviter de considérer les variables qui ne
@@ -1148,56 +1197,22 @@ public class Solveur {
 
 
 	public void displayHashMap(HashMap<String,ArrayList<Integer>> map) {
-		System.out.println("-----------------------");
+		this.options.diagnostic("-----------------------");
 		for(String clef : map.keySet()) {
 			int maxValue = 10;
-			System.out.println(clef);
+			this.options.diagnostic(clef);
 			for(int value : map.get(clef)) {
 				if(maxValue>0) {
-					System.out.println("\t=>"+dictionnaire.getValue(value));
+					this.options.diagnostic("\t=>"+dictionnaire.getValue(value));
 					maxValue--;
 				}
 			}
-			System.out.println();
+			this.options.diagnostic("\n");
 
 		}
 	}
 
-
-	//TODO: à supprimer ?
-	public void jenaQueries(String queriesPath,String dataPath) {
-		Model model = ModelFactory.createDefaultModel();
-		InputStream in = FileManager.get().open(dataPath);
-
-		model.read(in, null,"RDF/XML");
-
-		try {
-			File myObj = new File(queriesPath);
-			Scanner myReader = new Scanner(myObj);
-
-			while (myReader.hasNextLine()) {
-				String data = myReader.nextLine();
-				Query query = QueryFactory.create(data);
-				QueryExecution qexec = QueryExecutionFactory.create(query,model);
-				try {
-					ResultSet rs = qexec.execSelect();
-					System.out.println("Query : "+data);
-					ResultSetFormatter.out(System.out, rs, query);
-					System.out.println();
-
-				} finally {
-					qexec.close();
-				}
-			}
-
-			//(String req,String dataPath,String queriesPath,String outputPath)
-			myReader.close();
-		} catch (FileNotFoundException e) {
-			System.out.println("An error occurred.");
-			e.printStackTrace();
-		}
-	}
-
+	//TODO: à supprimer les 3 fonctions suivantes ?
 	public String printRes(ArrayList<String> tab){
 		String res = "";
 		for(String i: tab){
@@ -1206,11 +1221,10 @@ public class Solveur {
 		return res;
 	}
 
-
-	//TODO: à supprimer  ?
 	public void checkReq(String toCompare){
 		System.out.println(this.dictionnaire.getValue(toCompare));
 	}
+
 	public Options getOptions(){
 		return this.options;
 	}
@@ -1266,6 +1280,7 @@ public class Solveur {
 	}
 
 	public void warm(float pct, ArrayList<String> queries, boolean optim_none) throws MalformedQueryException {
+		this.options.diagnostic("Warm "+pct);
 		Float queriesToExec=queries.size()*pct;
 		ArrayList starVariables;
 		ArrayList<Integer> generated = new ArrayList<>();
@@ -1277,18 +1292,18 @@ public class Solveur {
 			}
 			generated.add(c);
 			starVariables = getStarVariables(queries.get(c));
+			//TODO: à facto ?
 			if(starVariables.size()==0) {
-				;
 				if (!optim_none) {
-					System.out.println("OPTIM");
+					this.options.diagnostic("- M2b");
 					solveOptim(queries.get(c));
 				} else {
-					System.out.println("NAIVE");
+					this.options.diagnostic("- M2a");
 					solve(queries.get(c));
 				}
 			}
 			else{
-				System.out.println("STAR QUERIES");
+				this.options.diagnostic("- M1");
 				solveStarQuery(queries.get(c),starVariables);
 			}
 		}
@@ -1341,10 +1356,6 @@ public class Solveur {
 			return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
 		}
 
-		for(String var:variables){
-			//System.out.println(var);
-		}
-		//System.out.println("NOT GOOD "+constantes.size());
 		return 0;
 	}
 
@@ -1399,9 +1410,37 @@ public class Solveur {
 				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison);
 				myWriter.close();
 			} catch (IOException e) {
-				System.out.println("Erreur dans l'écriture du résultat de la requête");
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void traiterOptions() {
+		/*
+		String jenaString = "NON_DISPONIBLE";
+		if(this.options.getJena()) {
+			Boolean jena = this.jenaComparison(req, CSVResults);
+			if(jena){
+				jenaString = "true";
+			}
+			else{
+				jenaString="false";
+			}
+		}
+
+		if(this.options.getExport_query_results()) {
+			try {
+				FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv",true);
+				myWriter.write(req+"\n"+CSVResults); //TODO: à vérifier
+				myWriter.close();
+			} catch (IOException e) {
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
+				e.printStackTrace();
+			}
+		}
+
+		writeQueryStat(req, tS.toString(),"","","",jenaString); //TODO
+*/
 	}
 }
