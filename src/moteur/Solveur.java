@@ -133,7 +133,7 @@ public class Solveur {
 	}
 
 	public static int timeSec(long timeSpent){
-		return (int)timeSpent/1000000;
+		return (int)(timeSpent/1000000);
 	}
 
 	/**
@@ -159,30 +159,51 @@ public class Solveur {
 		long startTime_i = System.nanoTime();
 
 		for(String query: queries) {
+			if(this.options.getVerbose()) {
+				System.out.println("\n-------------------------");
+				System.out.println("Q : "+query);
+			}
+			
+			
 			if(isValid(query)) {
 				ArrayList<String> starVariables = getStarVariables(query);
 				if(starVariables.size()==0) {
 					if (!optim_none) {
-						System.out.println("OPTIM"); //TODO: verbose
+						System.out.println(">méthode optimisée"); //TODO: verbose
 						solveOptim(query);
 					} else {
-						System.out.println("NAIVE");
+						System.out.println(">méthode naïve");
 						solve(query);
 					}
 				}
 				else{
-					System.out.println("STAR QUERY");
+					System.out.println(">méthode requête en étoile");
 					solveStarQuery(query,starVariables);
+				}
+			}else {
+				if(this.options.getVerbose()) {
+					System.out.println("\t-> non valide (contient des ressources non présentes dans le dataset)");
 				}
 			}
 
 		}
+		
+		
+		
+		
 		long timeSpent = System.nanoTime() - startTime_i;
 		//TODO: on a pas pris en compte le warm ou quoi ?
 		this.stats.setWorkloadEvaluationTime(timeSec(timeSpent));
 		this.stats.setQueriesNum(queries.size());
 		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
-
+		
+		if(options.getJena()) {
+			System.out.println("\n---Jena---");
+			for(String query: queries) {
+				System.out.println(jenaSolve(query));
+			}
+			
+		}
 		//TODO: est-ce bien cette fonction ?
 		//if(options.getExport_query_stats()){
 		this.stats.writeStats();
@@ -673,15 +694,7 @@ public class Solveur {
 		Integer tS = ((int)timeSpent/1000000);
 		
 		if(this.options.getVerbose()) {
-			System.out.println("--------Résultats--------");
-			for (ArrayList<String> ligne : queryResult) {
-				for(int i = 0 ; i<ligne.size();i++) {
-					if(indicesVariablesProjetees.contains(i)) {
-						System.out.print(ligne.get(i)+", ");
-					}
-				}
-				System.out.println();
-			}
+			System.out.print(">"+(queryResult.size()-1)+" résultats");
 		}
 		
 		

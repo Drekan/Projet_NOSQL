@@ -44,7 +44,7 @@ public class DataStructure {
 		rdfParser.setRDFHandler(rdfListener);
 
 		try {
-			verbose+="Parsing des donn�es...\n";
+			verbose+="Parsing des données...\n";
 			rdfParser.parse(new FileReader(opt.getDataPath()),"");
 			this.dico.createDico();
 
@@ -78,7 +78,7 @@ public class DataStructure {
 
 		ArrayList<String[]> tuples = this.dico.getTuples();
 
-		verbose+="Cr�ation des index...";
+		verbose+="Création des index...";
 		for(Index index : indexes.values()) {
 			for(int i=0;i<tuples.size();i++) {
 				index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));

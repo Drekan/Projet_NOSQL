@@ -12,6 +12,7 @@ public class Options {
 	float warmPct;
 	Boolean optim_none;
 	Boolean star_queries;
+	Boolean diagnostic;
 
 	public String getQueriesPath() {
 		return queriesPath;
@@ -101,6 +102,10 @@ public class Options {
 	public void setStar_queries(Boolean star_queries) {
 		this.star_queries = star_queries;
 	}
+	
+	public void setDiagnostic(Boolean diag) {
+		this.diagnostic = diag;
+	}
 
 	public Options(String line){
 		this.queriesPath="queries.txt";
@@ -114,6 +119,7 @@ public class Options {
 		this.warmPct=0;
 		this.optim_none=false;
 		this.star_queries=false;
+		this.diagnostic=false;
 
 		String[] options = line.split("-");
 		for(String opt: options){
