@@ -195,9 +195,6 @@ public class Solveur {
 		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
 
 		/*
-=======
-		
->>>>>>> eaed1441f227810598dfae9034963a92299341dd
 		if(options.getJena()) {
 			System.out.println("\n---Jena---");
 			for(String query: queries) {
@@ -212,6 +209,7 @@ public class Solveur {
 		if(options.getVerbose()) {
 			this.options.diagnostic("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
 		}
+
 	}
 
 	public Boolean isValid(String query) throws MalformedQueryException {
@@ -499,6 +497,7 @@ public class Solveur {
 		timeSpent = (timeSpent-startTime);
 		this.options.diagnostic("TEMPS= "+ timeSpent + "ms");
 
+		/*
 		this.options.diagnostic("--------Résultats--------");
 		for (ArrayList<String> ligne : queryResult) {
 			for(int i = 0 ; i<ligne.size();i++) {
@@ -507,7 +506,7 @@ public class Solveur {
 				}
 			}
 			this.options.diagnostic("\n");
-		}
+		}*/
 	}
 
 	public HashMap<StatementPattern,Integer> buildComposantesConnexes(List<StatementPattern> patterns) throws MalformedQueryException{
@@ -564,15 +563,6 @@ public class Solveur {
 		//   -calculer les composantes connexes
 		//   -pour chaque composante c, sort-merge join ou merge
 		//
-		
-		/* 
-		 *  ?x ?y
-			?y ?z
-			?z ?a
-			
-		 * 
-		 * 
-		 */
 
 		//4. aggréger les résultats de chaque composante c1 c2
 
@@ -721,14 +711,18 @@ public class Solveur {
 		timeSpent = (timeSpent-startTime);
 		Integer tS = ((int)timeSpent/1000000);
 
+
+		/*
 		this.options.diagnostic("--------Résultats--------");
 		for (ArrayList<String> ligne : queryResult) {
+
 			for(int i = 0 ; i<ligne.size();i++) {
 				if(indicesVariablesProjetees.contains(i)) {
 					this.options.diagnostic(ligne.get(i)+", ");
 				}
 			}
 			this.options.diagnostic("\n");
+			*/
 
 			if(this.options.getDiagnostic()) {
 				this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
@@ -736,12 +730,9 @@ public class Solveur {
 
 
 			this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
-		}
-
+		//}
 
 		//sortMergeJoin();
-
-
 
 		//TODO: optimization time
 
@@ -810,9 +801,6 @@ public class Solveur {
 					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
 				}
 			}
-
-
-
 		}
 		else if(constantes.size() == 1) { // une constante dans le pattern
 
@@ -867,19 +855,6 @@ public class Solveur {
 			}
 		}
 		return res;
-	}
-
-	public StatementPattern minSelectivity(ArrayList<StatementPattern> alreadySolved, HashMap<StatementPattern, Double> selectivities){
-		StatementPattern minSp = new StatementPattern();
-		double minS = 1;
-		for(StatementPattern sp: selectivities.keySet()){
-			if(selectivities.get(sp)<minS && !alreadySolved.contains(sp)){
-				minSp = sp;
-				minS = selectivities.get(sp);
-			}
-		}
-		alreadySolved.add(minSp);
-		return minSp;
 	}
 
 	/**
@@ -996,6 +971,7 @@ public class Solveur {
 		long timeSpent = System.nanoTime() - startTime;
 		Integer tS = ((int)timeSpent/1000000);
 
+		/*
 		this.options.diagnostic("--------Résultats--------");
 		for (ArrayList<String> ligne : results) {
 			for(int i = 0 ; i<ligne.size();i++) {
@@ -1005,6 +981,7 @@ public class Solveur {
 			}
 			this.options.diagnostic("\n");
 		}
+		 */
 
 		//On construit une chaine de caractères sous format CSV de nos résultats
 		// Afin de pouvoir le comparer à celui de Jena
@@ -1194,38 +1171,17 @@ public class Solveur {
 		return result;
 	}
 
+	public boolean jenaComparison(String req, String ourResultCSV){
+		//TODO ATTENTION AUX "EXCES"
+		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
+		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
 
-	public void displayHashMap(HashMap<String,ArrayList<Integer>> map) {
-		this.options.diagnostic("-----------------------");
-		for(String clef : map.keySet()) {
-			int maxValue = 10;
-			this.options.diagnostic(clef);
-			for(int value : map.get(clef)) {
-				if(maxValue>0) {
-					this.options.diagnostic("\t=>"+dictionnaire.getValue(value));
-					maxValue--;
-				}
+		for(String j: jena){
+			if (!ourResult.contains(j)){
+				return false;
 			}
-			this.options.diagnostic("\n");
-
 		}
-	}
-
-	//TODO: à supprimer les 3 fonctions suivantes ?
-	public String printRes(ArrayList<String> tab){
-		String res = "";
-		for(String i: tab){
-			res+=i+" ";
-		}
-		return res;
-	}
-
-	public void checkReq(String toCompare){
-		System.out.println(this.dictionnaire.getValue(toCompare));
-	}
-
-	public Options getOptions(){
-		return this.options;
+		return true;
 	}
 
 	/**
@@ -1265,19 +1221,6 @@ public class Solveur {
 		}
 	}
 
-	public boolean jenaComparison(String req, String ourResultCSV){
-		//TODO ATTENTION AUX "EXCES"
-		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
-		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
-
-		for(String j: jena){
-			if (!ourResult.contains(j)){
-				return false;
-			}
-		}
-		return true;
-	}
-
 	public void warm(float pct, ArrayList<String> queries, boolean optim_none) throws MalformedQueryException {
 		this.options.diagnostic("Warm "+pct);
 		Float queriesToExec=queries.size()*pct;
@@ -1306,6 +1249,19 @@ public class Solveur {
 				solveStarQuery(queries.get(c),starVariables);
 			}
 		}
+	}
+
+	public StatementPattern minSelectivity(ArrayList<StatementPattern> alreadySolved, HashMap<StatementPattern, Double> selectivities){
+		StatementPattern minSp = new StatementPattern();
+		double minS = 1;
+		for(StatementPattern sp: selectivities.keySet()){
+			if(selectivities.get(sp)<minS && !alreadySolved.contains(sp)){
+				minSp = sp;
+				minS = selectivities.get(sp);
+			}
+		}
+		alreadySolved.add(minSp);
+		return minSp;
 	}
 
 	//TODO: factoriser?
@@ -1375,6 +1331,52 @@ public class Solveur {
 		return this.dictionnaire.getValue(res);
 	}
 
+	//TODO: vérifier que marche
+	public void writeQueryStat(String req, String evalTime, String nbRep, String evalOrder, String selectivity, String jenaComparison){
+		if(this.options.getExport_query_stats()) {
+			try {
+				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
+				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison);
+				myWriter.close();
+			} catch (IOException e) {
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void traiterOptions(String req, String nbRep, String evalOrder, String selectivity,String CSVResults, String tS) {
+		String outputPath = this.options.getOutputPath();
+		String jenaString = "NON_DISPONIBLE";
+		if(this.options.getJena()) {
+			Boolean jena = this.jenaComparison(req, CSVResults);
+			if(jena){
+				jenaString = "true";
+			}
+			else{
+				jenaString="false";
+			}
+		}
+
+		if(this.options.getExport_query_results()) {
+			try {
+				FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv",true);
+				myWriter.write(req+"\n"+CSVResults); //TODO: à vérifier
+				myWriter.close();
+			} catch (IOException e) {
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
+				e.printStackTrace();
+			}
+		}
+
+		writeQueryStat(req, tS, nbRep, evalOrder,selectivity,jenaString); //TODO
+	}
+
+
+
+
+	//TODO: à supprimer les 3 fonctions suivantes ?
+
 	public Map<String,ArrayList<Integer>> sortMergeJoin(Integer[][] left, Integer[][] right, String variable){
 		//Liste des r�sultats (x : < 1,2...>)
 		Map<String,ArrayList<Integer>> result = new HashMap<>();
@@ -1400,46 +1402,37 @@ public class Solveur {
 		return result;
 	}
 
-
-	//TODO: vérifier que marche
-	public void writeQueryStat(String req, String evalTime, String nbRep, String evalOrder, String selectivity, String jenaComparison){
-		if(this.options.getExport_query_stats()) {
-			try {
-				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
-				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison);
-				myWriter.close();
-			} catch (IOException e) {
-				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
-				e.printStackTrace();
+	public void displayHashMap(HashMap<String,ArrayList<Integer>> map) {
+		this.options.diagnostic("-----------------------");
+		for(String clef : map.keySet()) {
+			int maxValue = 10;
+			this.options.diagnostic(clef);
+			for(int value : map.get(clef)) {
+				if(maxValue>0) {
+					this.options.diagnostic("\t=>"+dictionnaire.getValue(value));
+					maxValue--;
+				}
 			}
+			this.options.diagnostic("\n");
+
 		}
 	}
 
-	public void traiterOptions() {
-		/*
-		String jenaString = "NON_DISPONIBLE";
-		if(this.options.getJena()) {
-			Boolean jena = this.jenaComparison(req, CSVResults);
-			if(jena){
-				jenaString = "true";
-			}
-			else{
-				jenaString="false";
-			}
+	public String printRes(ArrayList<String> tab){
+		String res = "";
+		for(String i: tab){
+			res+=i+" ";
 		}
+		return res;
+	}
 
-		if(this.options.getExport_query_results()) {
-			try {
-				FileWriter myWriter = new FileWriter(outputPath + "queryResult.csv",true);
-				myWriter.write(req+"\n"+CSVResults); //TODO: à vérifier
-				myWriter.close();
-			} catch (IOException e) {
-				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
-				e.printStackTrace();
-			}
-		}
+	public void checkReq(String toCompare){
+		System.out.println(this.dictionnaire.getValue(toCompare));
+	}
 
-		writeQueryStat(req, tS.toString(),"","","",jenaString); //TODO
-*/
+	public Options getOptions(){
+		return this.options;
 	}
 }
+
+

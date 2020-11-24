@@ -12,10 +12,10 @@ public class Statistics {
 	private int queriesNum;
 	private int queriesReadTime;
 	private int dicCreationTime;
-	private int indexesNum = 6; //TODO : demander à quoi ça sert -- faut il compter aussi les index2 et index1?
+	private int indexesNum = 6; //TODO!
 	private int indexesCreationTotalTime;
 	private int workloadEvaluationTime;
-	private int optimizationTime = 0; //TODO : AQCS ??
+	private int optimizationTime = 0; //TODO!
 	private long totalTime;
 
 
