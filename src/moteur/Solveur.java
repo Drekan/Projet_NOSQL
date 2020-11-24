@@ -18,6 +18,7 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 
+import org.apache.commons.csv.CSVRecord;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -183,9 +184,7 @@ public class Solveur {
 					solveStarQuery(query,starVariables);
 				}
 			}else {
-				if(this.options.getVerbose()) {
-					System.out.println("\t-> non valide (contient des ressources non présentes dans le dataset)");
-				}
+				this.options.diagnostic("\t-> non valide (contient des ressources non présentes dans le dataset)");
 			}
 
 		}
@@ -207,7 +206,7 @@ public class Solveur {
 		}
 
 		if(options.getVerbose()) {
-			this.options.diagnostic("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
+			System.out.println("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
 		}
 
 	}
@@ -497,16 +496,18 @@ public class Solveur {
 		timeSpent = (timeSpent-startTime);
 		this.options.diagnostic("TEMPS= "+ timeSpent + "ms");
 
-		/*
-		this.options.diagnostic("--------Résultats--------");
+		String CSVResults = "";
 		for (ArrayList<String> ligne : queryResult) {
 			for(int i = 0 ; i<ligne.size();i++) {
 				if(indicesVariablesProjetees.contains(i)) {
-					this.options.diagnostic(ligne.get(i)+", ");
+					CSVResults += (ligne.get(i) + ", ");
 				}
 			}
-			this.options.diagnostic("\n");
-		}*/
+			CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+			CSVResults+="\n";
+		}
+		//TODO: vérifier evalOrder
+		this.traiterOptions(req,String.valueOf(queryResult),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
 	}
 
 	public HashMap<StatementPattern,Integer> buildComposantesConnexes(List<StatementPattern> patterns) throws MalformedQueryException{
@@ -545,27 +546,6 @@ public class Solveur {
 
 	public void solveOptim(String req) throws MalformedQueryException {
 
-		//2.pour chaque pattern p (par ordre spécifié en 1] ) 
-		//pour chaque variable v de p, faire
-		//- si la clef v existe dans la mémoire, alors on ajoute les tuples contenant v aux résultats de p
-		//  seulement si la valeur v est déjà en mémoire
-
-		//- sinon, drame : il faut ajouter la clef v à la mémoire ET pour chaque tuple, ajouter la valeur de v
-		//- à la mémoire et aux résultats
-
-		// objets : -résultats de p     -mémoire
-
-		//3. (osef de la mémoire ici)
-		//   Ici, il faut fusionner les résultats de tous les patterns.
-		// 	 Dans un premier temps, on fusionne ce qu'il est possible de fusionner,
-		//   c.a.d les patterns de même composante connexe.
-		// 
-		//   -calculer les composantes connexes
-		//   -pour chaque composante c, sort-merge join ou merge
-		//
-
-		//4. aggréger les résultats de chaque composante c1 c2
-
 		//TODO: merge join
 		long startTime = System.nanoTime();
 		String outputPath = this.options.getOutputPath();
@@ -583,9 +563,12 @@ public class Solveur {
 
 		//1. Sélectionner les pattern par valeur de sélectivité croissante
 
+		String selectivityTxt = "";
 		HashMap<StatementPattern, Double> selectivities = new HashMap<>();
 		for(StatementPattern sp: patterns) {
-			selectivities.put(sp,selectivity(sp));
+			double slct = selectivity(sp);
+			selectivities.put(sp,slct);
+			selectivityTxt+=sp.toString()+" "+slct+"\n";
 		}
 
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
@@ -709,39 +692,27 @@ public class Solveur {
 
 		long timeSpent = System.nanoTime();
 		timeSpent = (timeSpent-startTime);
-		Integer tS = ((int)timeSpent/1000000);
+		int tS =((int)timeSpent/1000000);
+		this.stats.setOptimizationTime(tS); //TODO à changer
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
+		}
 
 
-		/*
-		this.options.diagnostic("--------Résultats--------");
-		for (ArrayList<String> ligne : queryResult) {
-
-			for(int i = 0 ; i<ligne.size();i++) {
-				if(indicesVariablesProjetees.contains(i)) {
-					this.options.diagnostic(ligne.get(i)+", ");
-				}
-			}
-			this.options.diagnostic("\n");
-			*/
-
-			if(this.options.getDiagnostic()) {
-				this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
-			}
-
-
-			this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
+		this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
 		//}
 
 		//sortMergeJoin();
 
-		//TODO: optimization time
+
 
 		//On construit une chaine de caractères sous format CSV de nos résultats
 		// Afin de pouvoir le comparer à celui de Jena
 
 		String CSVResults="";
-		/*
-		for (String : results) {
+
+		for (ArrayList<String> ligne : queryResult) {
 			for(int i = 0 ; i<ligne.size();i++) {
 				if(indicesVariablesProjetees.contains(i)) {
 					CSVResults+=ligne.get(i)+",";
@@ -751,19 +722,8 @@ public class Solveur {
 			CSVResults+="\n";
 		}
 
-		 */
-
-
-		String jenaString = "NON_DISPONIBLE";
-		if(this.options.getJena()) {
-			Boolean jena = this.jenaComparison(req, CSVResults);
-			if(jena){
-				jenaString = "True";
-			}
-			else{
-				jenaString="False";
-			}
-		}
+		this.stats.setIndexesNum(18); //TODO big warning
+		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 	}
 
 	//Avoir la meme taille pour les AL dans results
@@ -924,7 +884,6 @@ public class Solveur {
 				//Choix de base SPO
 				//TODO: normalement n'arrive jamais alors on enlève ?
 				// TODO: est-ce qu'il existe un plus optimisé qu'un autre?
-				// TODO: Vérifier noms de variables
 
 				Index spo = this.indexes.get("spo");
 
@@ -941,7 +900,6 @@ public class Solveur {
 		}
 
 		//avoir la variable qui apparait dans chaque pattern
-
 
 		//Dans allResults on a les résultats de chaque variable pour chaque pattern
 		//Ici on fait pour chaque variable l'intersection des résultats
@@ -969,7 +927,7 @@ public class Solveur {
 		}
 
 		long timeSpent = System.nanoTime() - startTime;
-		Integer tS = ((int)timeSpent/1000000);
+		int tS = ((int)timeSpent/1000000);
 
 		/*
 		this.options.diagnostic("--------Résultats--------");
@@ -996,6 +954,7 @@ public class Solveur {
 			CSVResults+="\n";
 		}
 
+		/*
 		String jenaString = "NON_DISPONIBLE";
 		if(this.options.getJena()) {
 			Boolean jena = this.jenaComparison(req, CSVResults);
@@ -1019,7 +978,9 @@ public class Solveur {
 		}
 
 		writeQueryStat(req, tS.toString(),"","","",jenaString); //TODO
+		 */
 
+		traiterOptions(req, String.valueOf(results.size()), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
 	}
 
 	//TODO : dans le cas où toutes les variables ne sont pas à projeter, éviter de considérer les variables qui ne
@@ -1176,12 +1137,13 @@ public class Solveur {
 		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
 		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
 
+		return jena.size() == ourResult.size();
+				/*
 		for(String j: jena){
 			if (!ourResult.contains(j)){
 				return false;
 			}
-		}
-		return true;
+		}*/
 	}
 
 	/**
@@ -1265,7 +1227,6 @@ public class Solveur {
 	}
 
 	//TODO: factoriser?
-
 	/**
 	 * Calcule le critère de sélectivité pour chaque pattern
 	 * @param sp
@@ -1347,6 +1308,11 @@ public class Solveur {
 
 	public void traiterOptions(String req, String nbRep, String evalOrder, String selectivity,String CSVResults, String tS) {
 		String outputPath = this.options.getOutputPath();
+
+		if(options.getVerbose()) {
+			System.out.println("\n - Temps requete : "+ tS+"ms");
+		}
+
 		String jenaString = "NON_DISPONIBLE";
 		if(this.options.getJena()) {
 			Boolean jena = this.jenaComparison(req, CSVResults);
@@ -1371,8 +1337,6 @@ public class Solveur {
 
 		writeQueryStat(req, tS, nbRep, evalOrder,selectivity,jenaString); //TODO
 	}
-
-
 
 
 	//TODO: à supprimer les 3 fonctions suivantes ?

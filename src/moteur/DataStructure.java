@@ -44,7 +44,6 @@ public class DataStructure {
 		try {
 			this.opt.diagnostic("Parsing des donn�es...\n");
 			rdfParser.parse(new FileReader(opt.getDataPath()),"");
-
 			this.dico.createDico();
 
 			stats.setRDFTripleNum(dico.getTuples().size());

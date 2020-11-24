@@ -20,21 +20,19 @@ public class MiniProjet {
 	 */
 	public static void main(String[] args) throws IOException, MalformedQueryException {
 		long startTime_i = System.nanoTime();
-		String optionsLine = ""; // TODO: à supprimer et remplacer par args
+
 		//I. Définition des options
-		Options options = new Options(optionsLine);
+		Options options = new Options("");
 
-		//activation du mode verbose
-		//options.setVerbose(true);
-
-		options.setJena(false);
-
-		//à commenter
+		//Options à commenter
+		/*
+		options.setVerbose(true);
+		options.setExport_query_results(true);
+		options.setExport_query_stats(true);
+		options.setJena(true);
 		options.setOptim_none(false);
 		//options.setDiagnostic(true);
-
-		//à commenter
-		options.setDataPath("datasets/500K.rdfxml");
+		options.setDataPath("datasets/500K.rdfxml");*/
 
 		Statistics statistiques = new Statistics(options);
 
@@ -47,6 +45,7 @@ public class MiniProjet {
 
 		//III. Partie solveur
 		Solveur solveur = new Solveur(dataStructure, options, statistiques);
+
 		//TODO: à améliorer
 		long timeSpent_i = System.nanoTime() - startTime_i;
 		solveur.traiterQueries((int)timeSpent_i/1000000);

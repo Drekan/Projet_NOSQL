@@ -1,0 +1,41 @@
+SELECT * WHERE {  ?v1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory10>  },0,85,QueryOrder,NON_DISPONIBLE,trueSELECT * WHERE {  ?v1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory14> .  ?v0 <http://purl.org/goodrelations/includes> ?v1 .  ?v1 <http://ogp.me/ns#tag> ?v2 .  ?v1 <http://ogp.me/ns#title> ?v4 .  ?v1 <http://schema.org/expires> ?v7 .  ?v1 <http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre> ?v3 .  ?v3 <http://ogp.me/ns#tag> ?v2 .  ?v3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?v6 .  },342,1,selectivity,StatementPattern
+   Var (name=v1)
+   Var (name=-const-1, value=http://www.w3.org/1999/02/22-rdf-syntax-ns#type, anonymous)
+   Var (name=-const-2, value=http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory14, anonymous)
+ 2.392907804133796E-4
+StatementPattern
+   Var (name=v0)
+   Var (name=-const-3, value=http://purl.org/goodrelations/includes, anonymous)
+   Var (name=v1)
+ 0.008614468094881665
+StatementPattern
+   Var (name=v1)
+   Var (name=-const-4, value=http://ogp.me/ns#tag, anonymous)
+   Var (name=v2)
+ 0.01502746100996024
+StatementPattern
+   Var (name=v1)
+   Var (name=-const-5, value=http://ogp.me/ns#title, anonymous)
+   Var (name=v4)
+ 0.002392907804133796
+StatementPattern
+   Var (name=v1)
+   Var (name=-const-6, value=http://schema.org/expires, anonymous)
+   Var (name=v7)
+ 9.571631216535184E-5
+StatementPattern
+   Var (name=v1)
+   Var (name=-const-7, value=http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre, anonymous)
+   Var (name=v3)
+ 0.005760207666110874
+StatementPattern
+   Var (name=v3)
+   Var (name=-const-8, value=http://ogp.me/ns#tag, anonymous)
+   Var (name=v2)
+ 0.01502746100996024
+StatementPattern
+   Var (name=v3)
+   Var (name=-const-9, value=http://www.w3.org/1999/02/22-rdf-syntax-ns#type, anonymous)
+   Var (name=v6)
+ 0.014468477746914584
+,false
