@@ -31,6 +31,7 @@ public class MiniProjet {
 
 		//à commenter
 		options.setOptim_none(false);
+		options.setDiagnostic(true);
 
 		//à commenter
 		options.setDataPath("datasets/500K.rdfxml");

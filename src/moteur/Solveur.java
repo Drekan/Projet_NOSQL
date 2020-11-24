@@ -576,11 +576,15 @@ public class Solveur {
 		//4. aggréger les résultats de chaque composante c1 c2
 		
 		//TODO: merge join
+		
+		
 		long startTime = System.nanoTime();
 		String outputPath = this.options.getOutputPath();
 		String verbose ="";
 		verbose+="\nRequete: "+req+"\n";
-
+		
+		long resultatsPartielsStart = System.nanoTime();
+		
 		SPARQLParser sparqlParser = new SPARQLParser();
 		ParsedQuery pq = sparqlParser.parseQuery(req, null);
 		List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
@@ -595,10 +599,12 @@ public class Solveur {
 		for(StatementPattern sp: patterns) {
 			selectivities.put(sp,selectivity(sp));
 		}
+		
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
 
 		HashMap<String, ArrayList<Integer>> resultsPerVariable = new HashMap<>();
-
+		
+		
 		//2. résultat de chaque pattern
 		HashMap<StatementPattern,HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
 		
@@ -609,7 +615,20 @@ public class Solveur {
 			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
 		}
 		
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
+		}
+		
+		long composantesConnexesStart = System.nanoTime();
+		
 		HashMap<StatementPattern,Integer> patternConnexes = buildComposantesConnexes(patterns);
+		
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Calcul des composantes connexes : "+((System.nanoTime()-composantesConnexesStart)/1000000)+"ms]");
+		}
+		
+		long mergeStart = System.nanoTime();
+		
 		ArrayList<ArrayList<ArrayList<String>>> mergedComponents = new ArrayList<>();
 		for(int composante : patternConnexes.values()) {
 			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
@@ -661,6 +680,12 @@ public class Solveur {
 			mergedComponents.add(merged);		
 		}
 		
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Merge des résultats partiels : "+((System.nanoTime()-mergeStart)/1000000)+"ms]");
+		}
+		
+		long produitCartesienStart = System.nanoTime();
+		
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
 			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
@@ -669,8 +694,13 @@ public class Solveur {
 		}
 
 		ArrayList<ArrayList<String>> queryResult = mergedComponents.get(0);
-
-
+		
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Produit cartésien de chaque composante : "+((System.nanoTime()-produitCartesienStart)/1000000)+"ms]");
+		}
+		
+		long formattageResultatStart = System.nanoTime();
+		
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
 		ArrayList<String> varToReturn = new ArrayList<>();
 		pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
@@ -692,6 +722,11 @@ public class Solveur {
 		long timeSpent = System.nanoTime();
 		timeSpent = (timeSpent-startTime);
 		Integer tS = ((int)timeSpent/1000000);
+		
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
+		}
+		
 		
 		if(this.options.getVerbose()) {
 			System.out.print(">"+(queryResult.size()-1)+" résultats");
@@ -732,6 +767,8 @@ public class Solveur {
 				jenaString="False";
 			}
 		}
+		
+
 
 
 	}

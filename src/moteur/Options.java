@@ -57,6 +57,10 @@ public class Options {
 	public Boolean getStar_queries() {
 		return star_queries;
 	}
+	
+	public Boolean getDiagnostic() {
+		return this.diagnostic;
+	}
 
 
 	public void setQueriesPath(String queriesPath) {
