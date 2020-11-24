@@ -71,7 +71,7 @@ public class DataStructure {
 
 		ArrayList<String[]> tuples = this.dico.getTuples();
 
-		this.opt.diagnostic("Cr�ation des index...");
+		this.opt.diagnostic("Création des index...");
 		for(Index index : indexes.values()) {
 			for(int i=0;i<tuples.size();i++) {
 				index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));

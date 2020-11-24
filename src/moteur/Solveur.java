@@ -189,13 +189,15 @@ public class Solveur {
 			}
 
 		}
-
 		long timeSpent = System.nanoTime() - startTime_i;
 		this.stats.setWorkloadEvaluationTime(timeSec(timeSpent));
 		this.stats.setQueriesNum(queries.size());
 		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
 
 		/*
+=======
+		
+>>>>>>> eaed1441f227810598dfae9034963a92299341dd
 		if(options.getJena()) {
 			System.out.println("\n---Jena---");
 			for(String query: queries) {
@@ -575,8 +577,6 @@ public class Solveur {
 		//4. aggréger les résultats de chaque composante c1 c2
 
 		//TODO: merge join
-
-
 		long startTime = System.nanoTime();
 		String outputPath = this.options.getOutputPath();
 		this.options.diagnostic("\nRequete: "+req+"\n");
@@ -601,7 +601,6 @@ public class Solveur {
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
 
 		HashMap<String, ArrayList<Integer>> resultsPerVariable = new HashMap<>();
-
 
 		//2. résultat de chaque pattern
 		HashMap<StatementPattern,HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
@@ -699,6 +698,7 @@ public class Solveur {
 
 		long formattageResultatStart = System.nanoTime();
 
+
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
 		ArrayList<String> varToReturn = new ArrayList<>();
 		pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
@@ -736,7 +736,6 @@ public class Solveur {
 
 
 			this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
-
 		}
 
 
