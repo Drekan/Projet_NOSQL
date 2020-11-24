@@ -25,15 +25,16 @@ public class MiniProjet {
 		Options options = new Options(optionsLine);
 
 		//activation du mode verbose
-		options.setVerbose(false);
+		//options.setVerbose(true);
 
-		options.setJena(true);
-
-		//à commenter
-		options.setOptim_none(true);
+		options.setJena(false);
 
 		//à commenter
-		//options.setDataPath("datasets/500K.rdfxml");
+		options.setOptim_none(false);
+		//options.setDiagnostic(true);
+
+		//à commenter
+		options.setDataPath("datasets/500K.rdfxml");
 
 		Statistics statistiques = new Statistics(options);
 
@@ -49,10 +50,5 @@ public class MiniProjet {
 		//TODO: à améliorer
 		long timeSpent_i = System.nanoTime() - startTime_i;
 		solveur.traiterQueries((int)timeSpent_i/1000000);
-		
-		System.out.println("Temps total : "+ statistiques.getWorkloadEvaluationTime());
-
-
 	}
-
 }

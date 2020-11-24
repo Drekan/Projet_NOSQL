@@ -37,25 +37,20 @@ public class DataStructure {
 
 		this.dico = new Dictionnaire(triLexicographique);
 
-		String verbose = "";
-
 		RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
 		RDFListener rdfListener = new RDFListener(this.dico);
 		rdfParser.setRDFHandler(rdfListener);
 
 		try {
-			verbose+="Parsing des donn�es...\n";
+			this.opt.diagnostic("Parsing des donn�es...\n");
 			rdfParser.parse(new FileReader(opt.getDataPath()),"");
+
 			this.dico.createDico();
 
 			stats.setRDFTripleNum(dico.getTuples().size());
 
-			verbose+="La taille du dictionnaire est de " + dico.getSize()+"\n";
-			verbose+="Nombre total de ressources lues : " + rdfListener.ressourcesNum+"\n";
-
-			if(opt.getVerbose()) {
-				System.out.println(verbose);
-			}
+			this.opt.diagnostic("La taille du dictionnaire est de " + dico.getSize()+"\n");
+			this.opt.diagnostic("Nombre total de ressources lues : " + rdfListener.ressourcesNum+"\n");
 
 		} catch (Exception e) {
 
@@ -64,10 +59,8 @@ public class DataStructure {
 		stats.setDicCreationTime((int)timeSpent_d/1000000);
 	}
 
-	public void createIndexes(Statistics stats) { //TODO: verbose
+	public void createIndexes(Statistics stats) {
 		long startTime_i = System.nanoTime();
-
-		String verbose = "";
 
 		this.indexes.put("spo",new Index("spo"));
 		this.indexes.put("sop",new Index("sop"));
@@ -78,16 +71,13 @@ public class DataStructure {
 
 		ArrayList<String[]> tuples = this.dico.getTuples();
 
-		verbose+="Cr�ation des index...";
+		this.opt.diagnostic("Création des index...");
 		for(Index index : indexes.values()) {
 			for(int i=0;i<tuples.size();i++) {
 				index.add(this.dico.getValue(tuples.get(i)[0]),this.dico.getValue(tuples.get(i)[1]),this.dico.getValue(tuples.get(i)[2]));
 			}
 		}
 
-		if(opt.getVerbose()) {
-			System.out.println(verbose);
-		}
 		long timeSpent_i = System.nanoTime() - startTime_i;
 
 		stats.setIndexesCreationTotalTime((int)timeSpent_i/1000000);
