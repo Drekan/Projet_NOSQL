@@ -79,19 +79,23 @@ public class Dictionnaire {
 	public int getSize() {
 		return this.intToString_dico.size();
 	}
+	
+	public Boolean exists(String ressource) {
+		return this.stringToInt_dico.containsKey(ressource);
+	}
 
 	public String getValue(int index) {
 		if(this.intToString_dico.containsKey(index))
 			return this.intToString_dico.get(index);
 		else
-			throw new NotFoundException("String Dictionnaire.getValue (int)");
+			throw new NotFoundException("String Dictionnaire.getValue (int) : "+index);
 	}
 
 	public int getValue(String value) {
 		if(this.stringToInt_dico.containsKey(value))
 			return this.stringToInt_dico.get(value);
 		else
-			throw new NotFoundException("Int Dictionnaire.getValue (String)");
+			throw new NotFoundException("Int Dictionnaire.getValue (String) : "+value);
 	}
 
 	public String[] getTuple(int i) {

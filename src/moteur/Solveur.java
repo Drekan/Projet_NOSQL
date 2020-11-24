@@ -159,20 +159,23 @@ public class Solveur {
 		long startTime_i = System.nanoTime();
 
 		for(String query: queries) {
-			ArrayList<String> starVariables = getStarVariables(query);
-			if(starVariables.size()==0) {
-				if (!optim_none) {
-					System.out.println("OPTIM"); //TODO: verbose
-					solveOptim(query);
-				} else {
-					System.out.println("NAIVE");
-					solve(query);
+			if(isValid(query)) {
+				ArrayList<String> starVariables = getStarVariables(query);
+				if(starVariables.size()==0) {
+					if (!optim_none) {
+						System.out.println("OPTIM"); //TODO: verbose
+						solveOptim(query);
+					} else {
+						System.out.println("NAIVE");
+						solve(query);
+					}
+				}
+				else{
+					System.out.println("STAR QUERY");
+					solveStarQuery(query,starVariables);
 				}
 			}
-			else{
-				System.out.println("STAR QUERY");
-				solveStarQuery(query,starVariables);
-			}
+
 		}
 		long timeSpent = System.nanoTime() - startTime_i;
 		//TODO: on a pas pris en compte le warm ou quoi ?
@@ -184,6 +187,21 @@ public class Solveur {
 		//if(options.getExport_query_stats()){
 		this.stats.writeStats();
 		//}
+	}
+	
+	public Boolean isValid(String query) throws MalformedQueryException {
+		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(query, null).getTupleExpr());
+		
+		for(StatementPattern sp : patterns) {
+			ArrayList<String> constantes = getConstantes(sp);
+			for(String c : constantes) {
+				if(!this.dictionnaire.exists(c)) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
 	}
 
 	public String encodePattern(StatementPattern sp) {
@@ -382,9 +400,17 @@ public class Solveur {
 
 			while(toMerge.size()>1) {
 				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
-				HashMap<String,ArrayList<Integer>> second = toMerge.remove(0);
-
-				String commonVariable = getCommonVariable(first,second);
+				
+				HashMap<String,ArrayList<Integer>> second = new HashMap<>();
+				int idx_second = 0;
+				String commonVariable = "";
+				while(second.isEmpty()) {
+					commonVariable = getCommonVariable(first,toMerge.get(idx_second));
+					if(!commonVariable.equals("")) {
+						second =toMerge.remove(idx_second);
+					}
+					idx_second++;
+				}
 
 				toMerge.add(this.mergeGeneral(first, second, commonVariable));
 			}
@@ -443,6 +469,10 @@ public class Solveur {
 				indicesVariablesProjetees.add(i);
 			}
 		}
+		
+		long timeSpent = System.nanoTime();
+		timeSpent = (timeSpent-startTime);
+		System.out.println("TEMPS= "+ timeSpent + "ms");
 
 		if(this.options.getVerbose()) {
 			System.out.println("--------Résultats--------");
@@ -455,9 +485,6 @@ public class Solveur {
 				System.out.println();
 			}
 		}
-
-		long timeSpent = System.nanoTime() - startTime;
-		Integer tS = ((int)timeSpent/1000000);
 
 	}
 	
@@ -640,7 +667,11 @@ public class Solveur {
 				indicesVariablesProjetees.add(i);
 			}
 		}
-
+		
+		long timeSpent = System.nanoTime();
+		timeSpent = (timeSpent-startTime);
+		Integer tS = ((int)timeSpent/1000000);
+		
 		if(this.options.getVerbose()) {
 			System.out.println("--------Résultats--------");
 			for (ArrayList<String> ligne : queryResult) {
@@ -689,9 +720,7 @@ public class Solveur {
 			}
 		}
 
-		long timeSpent = System.nanoTime() - startTime;
-		Integer tS = ((int)timeSpent/1000000);
-		System.out.println("TEMPS= "+ tS.toString());
+
 	}
 
 	//Avoir la meme taille pour les AL dans results
@@ -1303,19 +1332,19 @@ public class Solveur {
 		String i2 = indexType.substring(1,2);
 
 		if (constantes.size() == 2) {
-			System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
+			//System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
 			return this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
 		}
 
 		if (constantes.size() == 1) {
-			System.out.println(this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)));
+			//System.out.println(this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)));
 			return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
 		}
 
 		for(String var:variables){
-			System.out.println(var);
+			//System.out.println(var);
 		}
-		System.out.println("NOT GOOD "+constantes.size());
+		//System.out.println("NOT GOOD "+constantes.size());
 		return 0;
 	}
 
