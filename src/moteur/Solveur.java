@@ -485,6 +485,7 @@ public class Solveur {
 			}
 		});
 
+
 		ArrayList<Integer> indicesVariablesProjetees = new ArrayList<>();
 		for(int i = 0; i<queryResult.get(0).size();i++) {
 			if(varToReturn.contains(queryResult.get(0).get(i))) {
@@ -705,25 +706,24 @@ public class Solveur {
 
 		//sortMergeJoin();
 
-
-
 		//On construit une chaine de caractères sous format CSV de nos résultats
 		// Afin de pouvoir le comparer à celui de Jena
-
 		String CSVResults="";
-
-		for (ArrayList<String> ligne : queryResult) {
-			for(int i = 0 ; i<ligne.size();i++) {
-				if(indicesVariablesProjetees.contains(i)) {
-					CSVResults+=ligne.get(i)+",";
+		if(this.options.getExport_query_results() || this.options.getJena()) {
+			for (ArrayList<String> ligne : queryResult) {
+				for(int i = 0 ; i<ligne.size();i++) {
+					if(indicesVariablesProjetees.contains(i)) {
+						CSVResults+=ligne.get(i)+",";
+					}
 				}
+				CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+				CSVResults+="\n";
 			}
-			CSVResults=CSVResults.substring(0,CSVResults.length()-1);
-			CSVResults+="\n";
 		}
 
 		this.stats.setIndexesNum(18); //TODO big warning
 		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
+		
 	}
 
 	//Avoir la meme taille pour les AL dans results
