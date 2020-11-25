@@ -210,6 +210,45 @@ public class Solveur {
 		}
 
 	}
+	
+	//on compare deux version de solveOptim
+	public void comparer2solveOptim() throws MalformedQueryException {
+		ArrayList<String> queries = buildQueriesAL();
+		
+		long totalTimeA = 0, totalTimeB = 0;
+		
+		int nbIteration = 25;
+		for(int i = 0; i<nbIteration;i++) {
+			System.out.println((i+1)+"/"+nbIteration);
+			for(String query : queries) {
+				Boolean order = new Random().nextBoolean();
+				
+				if(order) {
+					long startA = System.nanoTime();
+					solveOptim(query);
+					totalTimeA += System.nanoTime()-startA;
+					
+					long startB = System.nanoTime();
+					solveOptim2(query);
+					totalTimeB += System.nanoTime()-startB;
+				}else {
+					long startB = System.nanoTime();
+					solveOptim2(query);
+					totalTimeB += System.nanoTime()-startB;
+					
+					long startA = System.nanoTime();
+					solveOptim(query);
+					totalTimeA += System.nanoTime()-startA;
+				}
+
+			}
+		}
+
+		
+		System.out.println("Temps total solveOptim: "+(double)totalTimeA/1000000000+" s");
+		System.out.println("Temps total solveOptim2: "+(double)totalTimeB/1000000000+" s");
+		
+	}
 
 	public Boolean isValid(String query) throws MalformedQueryException {
 		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(query, null).getTupleExpr());
@@ -304,18 +343,18 @@ public class Solveur {
 		return variables.isEmpty()?"":variables.get(0);
 	}
 
-	public ArrayList<ArrayList<String>> produitCartesien(ArrayList<ArrayList<String>> left,ArrayList<ArrayList<String>> right){
-		ArrayList<ArrayList<String>> result = new ArrayList<>();
+	public <T> ArrayList<ArrayList<T>> produitCartesien(ArrayList<ArrayList<T>> left,ArrayList<ArrayList<T>> right){
+		ArrayList<ArrayList<T>> result = new ArrayList<>();
 		result.add(new ArrayList<>());
-		ArrayList<String> concat = left.get(0);
+		ArrayList<T> concat = left.get(0);
 		concat.addAll(right.get(0));
 
 		result.get(0).addAll(concat);
 
 		int i = 0;
-		for(ArrayList<String> leftLine : left) {
+		for(ArrayList<T> leftLine : left) {
 			int j = 0;
-			for(ArrayList<String> rightLine : right){
+			for(ArrayList<T> rightLine : right){
 				if(i!=0 && j!=0) {
 					concat = new ArrayList<>(leftLine);
 					concat.addAll(rightLine);
@@ -711,6 +750,187 @@ public class Solveur {
 		String CSVResults="";
 		if(this.options.getExport_query_results() || this.options.getJena()) {
 			for (ArrayList<String> ligne : queryResult) {
+				for(int i = 0 ; i<ligne.size();i++) {
+					if(indicesVariablesProjetees.contains(i)) {
+						CSVResults+=ligne.get(i)+",";
+					}
+				}
+				CSVResults=CSVResults.substring(0,CSVResults.length()-1);
+				CSVResults+="\n";
+			}
+		}
+
+		this.stats.setIndexesNum(18); //TODO big warning
+		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
+		
+	}
+	
+	public void solveOptim2(String req) throws MalformedQueryException {
+
+		//TODO: merge join
+		long startTime = System.nanoTime();
+		String outputPath = this.options.getOutputPath();
+		this.options.diagnostic("\nRequete: "+req+"\n");
+
+		long resultatsPartielsStart = System.nanoTime();
+
+		SPARQLParser sparqlParser = new SPARQLParser();
+		ParsedQuery pq = sparqlParser.parseQuery(req, null);
+		List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
+
+		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
+
+		this.options.diagnostic("-- Lecture de chaque pattern par sélectivité croissante"+"\n");
+
+		//1. Sélectionner les pattern par valeur de sélectivité croissante
+
+		String selectivityTxt = "";
+		HashMap<StatementPattern, Double> selectivities = new HashMap<>();
+		for(StatementPattern sp: patterns) {
+			double slct = selectivity(sp);
+			selectivities.put(sp,slct);
+			selectivityTxt+=sp.toString()+" "+slct+"\n";
+		}
+
+		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
+
+		HashMap<String, ArrayList<Integer>> resultsPerVariable = new HashMap<>();
+
+		//2. résultat de chaque pattern
+		HashMap<StatementPattern,HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
+
+		while(alreadySolved.size()<patterns.size()) {
+			//TODO: vérifier que ça marche
+			StatementPattern spCurrent = minSelectivity(alreadySolved, selectivities);
+
+			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
+		}
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
+		}
+
+		long composantesConnexesStart = System.nanoTime();
+
+		HashMap<StatementPattern,Integer> patternConnexes = buildComposantesConnexes(patterns);
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Calcul des composantes connexes : "+((System.nanoTime()-composantesConnexesStart)/1000000)+"ms]");
+		}
+
+		long mergeStart = System.nanoTime();
+
+		ArrayList<ArrayList<ArrayList<Integer>>> mergedComponents = new ArrayList<>();
+		for(int composante : patternConnexes.values()) {
+			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
+
+			//on ajoute les patterns de même composante à toMerge
+			for(StatementPattern sp : patternConnexes.keySet()) {
+				if(patternConnexes.get(sp).equals(composante)) {
+					toMerge.add(resultsPerPattern.get(sp));
+				}
+			}
+
+			while(toMerge.size()>1) {
+				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
+
+				HashMap<String,ArrayList<Integer>> second = new HashMap<>();
+				int idx_second = 0;
+				String commonVariable = "";
+				while(second.isEmpty()) {
+					commonVariable = getCommonVariable(first,toMerge.get(idx_second));
+					if(!commonVariable.equals("")) {
+						second =toMerge.remove(idx_second);
+					}
+					idx_second++;
+				}
+
+				toMerge.add(this.mergeGeneral(first, second, commonVariable));
+			}
+
+			//on reformate en matrice de String
+			ArrayList<ArrayList<Integer>> merged = new ArrayList<>();
+
+			//taille de la première colonne de la fusion des patterns courants
+			int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
+			//initialisation de chaque ligne de la matrice résultat
+			for(int i = 0; i<= size;i++) {
+				merged.add(new ArrayList());
+			}
+			ArrayList<String> variableOrder = new ArrayList<>();
+			for(String variable : toMerge.get(0).keySet()) {
+				int currentLine = 0;
+				variableOrder.add(variable);
+
+				for(int value : toMerge.get(0).get(variable)) {
+					currentLine++;
+					merged.get(currentLine).add(value);
+				}
+			}
+
+			mergedComponents.add(merged);
+		}
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Merge des résultats partiels : "+((System.nanoTime()-mergeStart)/1000000)+"ms]");
+		}
+
+		long produitCartesienStart = System.nanoTime();
+
+		while(mergedComponents.size()>1) {
+			ArrayList<ArrayList<Integer>> left = mergedComponents.remove(0);
+			ArrayList<ArrayList<Integer>> right = mergedComponents.remove(0);
+
+			mergedComponents.add(produitCartesien(left,right));
+		}
+
+		ArrayList<ArrayList<Integer>> queryResult = mergedComponents.get(0);
+
+		if(this.options.getDiagnostic()) {
+			System.out.println("[Produit cartésien de chaque composante : "+((System.nanoTime()-produitCartesienStart)/1000000)+"ms]");
+		}
+
+		long formattageResultatStart = System.nanoTime();
+
+
+		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
+		ArrayList<String> varToReturn = new ArrayList<>();
+		pq.getTupleExpr().visit(new QueryModelVisitorBase<RuntimeException>() {
+			public void meet(Projection projection) {
+				List<ProjectionElem> test = projection.getProjectionElemList().getElements();
+				for(ProjectionElem p: test){
+					varToReturn.add(p.getSourceName());
+				}
+			}
+		});
+
+		ArrayList<Integer> indicesVariablesProjetees = new ArrayList<>();
+		for(int i = 0; i<queryResult.get(0).size();i++) {
+			if(varToReturn.contains(queryResult.get(0).get(i))) {
+				indicesVariablesProjetees.add(i);
+			}
+		}
+
+		long timeSpent = System.nanoTime();
+		timeSpent = (timeSpent-startTime);
+		int tS =((int)timeSpent/1000000);
+		this.stats.setOptimizationTime(tS); //TODO à changer
+
+		if(this.options.getDiagnostic()) {
+			this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
+		}
+
+
+		this.options.diagnostic(">"+(queryResult.size()-1)+" résultats");
+		//}
+
+		//sortMergeJoin();
+
+		//On construit une chaine de caractères sous format CSV de nos résultats
+		// Afin de pouvoir le comparer à celui de Jena
+		String CSVResults="";
+		if(this.options.getExport_query_results() || this.options.getJena()) {
+			for (ArrayList<Integer> ligne : queryResult) {
 				for(int i = 0 ; i<ligne.size();i++) {
 					if(indicesVariablesProjetees.contains(i)) {
 						CSVResults+=ligne.get(i)+",";
