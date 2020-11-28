@@ -212,12 +212,11 @@ public class Solveur {
 	}
 	
 	//on compare deux version de solveOptim
-	public void comparer2solveOptim() throws MalformedQueryException {
+	public void comparer2solveOptim(int nbIteration) throws MalformedQueryException {
 		ArrayList<String> queries = buildQueriesAL();
 		
 		long totalTimeA = 0, totalTimeB = 0;
 		
-		int nbIteration = 25;
 		for(int i = 0; i<nbIteration;i++) {
 			System.out.println((i+1)+"/"+nbIteration);
 			for(String query : queries) {
@@ -624,6 +623,7 @@ public class Solveur {
 
 			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
 		}
+		
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
@@ -803,8 +803,9 @@ public class Solveur {
 			//TODO: vérifier que ça marche
 			StatementPattern spCurrent = minSelectivity(alreadySolved, selectivities);
 
-			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
+			resultsPerPattern.put(spCurrent,getResult2(spCurrent, resultsPerVariable));
 		}
+		
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
@@ -820,7 +821,7 @@ public class Solveur {
 
 		long mergeStart = System.nanoTime();
 
-		ArrayList<ArrayList<ArrayList<Integer>>> mergedComponents = new ArrayList<>();
+		ArrayList<ArrayList<ArrayList<String>>> mergedComponents = new ArrayList<>();
 		for(int composante : patternConnexes.values()) {
 			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
 
@@ -849,7 +850,7 @@ public class Solveur {
 			}
 
 			//on reformate en matrice de String
-			ArrayList<ArrayList<Integer>> merged = new ArrayList<>();
+			ArrayList<ArrayList<String>> merged = new ArrayList<>();
 
 			//taille de la première colonne de la fusion des patterns courants
 			int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
@@ -857,14 +858,14 @@ public class Solveur {
 			for(int i = 0; i<= size;i++) {
 				merged.add(new ArrayList());
 			}
-			ArrayList<String> variableOrder = new ArrayList<>();
+
 			for(String variable : toMerge.get(0).keySet()) {
 				int currentLine = 0;
-				variableOrder.add(variable);
+				merged.get(currentLine).add(variable);
 
 				for(int value : toMerge.get(0).get(variable)) {
 					currentLine++;
-					merged.get(currentLine).add(value);
+					merged.get(currentLine).add(this.dictionnaire.getValue(value));
 				}
 			}
 
@@ -878,13 +879,13 @@ public class Solveur {
 		long produitCartesienStart = System.nanoTime();
 
 		while(mergedComponents.size()>1) {
-			ArrayList<ArrayList<Integer>> left = mergedComponents.remove(0);
-			ArrayList<ArrayList<Integer>> right = mergedComponents.remove(0);
+			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
+			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
 
 			mergedComponents.add(produitCartesien(left,right));
 		}
 
-		ArrayList<ArrayList<Integer>> queryResult = mergedComponents.get(0);
+		ArrayList<ArrayList<String>> queryResult = mergedComponents.get(0);
 
 		if(this.options.getDiagnostic()) {
 			System.out.println("[Produit cartésien de chaque composante : "+((System.nanoTime()-produitCartesienStart)/1000000)+"ms]");
@@ -930,7 +931,7 @@ public class Solveur {
 		// Afin de pouvoir le comparer à celui de Jena
 		String CSVResults="";
 		if(this.options.getExport_query_results() || this.options.getJena()) {
-			for (ArrayList<Integer> ligne : queryResult) {
+			for (ArrayList<String> ligne : queryResult) {
 				for(int i = 0 ; i<ligne.size();i++) {
 					if(indicesVariablesProjetees.contains(i)) {
 						CSVResults+=ligne.get(i)+",";
@@ -945,7 +946,7 @@ public class Solveur {
 		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 		
 	}
-
+	
 	//Avoir la meme taille pour les AL dans results
 	public HashMap<String, ArrayList<Integer>> getResult(StatementPattern sp, HashMap<String, ArrayList<Integer>> memory) throws MalformedQueryException {
 		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
@@ -979,6 +980,99 @@ public class Solveur {
 			}else {
 				if(memory.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))) {
 					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+				}
+			}
+		}
+		else if(constantes.size() == 1) { // une constante dans le pattern
+
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
+
+			Boolean firstTime_v1 = !memory.containsKey(variables.get(0));
+			Boolean firstTime_v2 = !memory.containsKey(variables.get(1));
+
+			if(firstTime_v1) {
+				memory.put(variables.get(0), new ArrayList<>());
+			}
+
+			if(firstTime_v2) {
+				memory.put(variables.get(1), new ArrayList<>());
+			}
+
+			Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
+			for (int i : keys_c1) {
+
+				if(firstTime_v1) {
+					memory.get(variables.get(0)).add(i);
+				}
+
+				if(memory.get(variables.get(0)).contains(i)) {
+					for(int j : index.getIndex().get(c1).get(i)) {
+
+						if(firstTime_v2) {
+							memory.get(variables.get(1)).add(j);
+						}
+
+						if(memory.get(variables.get(1)).contains(j)) {
+							res.get(variables.get(0)).add(i);
+							res.get(variables.get(1)).add(j);
+						}
+					}
+				}
+
+			}
+		}
+		else {
+			//TODO : prendre en compte memory ? (Cas où il y a 3 variables)
+			Index spo = this.indexes.get("spo");
+
+			for(int s : spo.getIndex().keySet()) {
+				for(int p : spo.getIndex().get(s).keySet()) {
+					for(int o : spo.getIndex().get(s).get(p)) {
+						res.get(variables.get(0)).add(s);
+						res.get(variables.get(1)).add(p);
+						res.get(variables.get(2)).add(o);
+					}
+				}
+			}
+		}
+		return res;
+	}
+	
+	public HashMap<String, ArrayList<Integer>> getResult2(StatementPattern sp, HashMap<String, ArrayList<Integer>> memory) throws MalformedQueryException {
+		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
+		ArrayList<String> allVariable = new ArrayList<>();
+		//on encode le pattern pour savoir quel index utiliser
+
+		String indexType = this.indexMap.get(this.encodePattern(sp));
+		Index index = this.indexes.get(indexType);
+
+		this.options.diagnostic("  Index utilisé: " + indexType+"\n");
+
+		ArrayList<String> variables = getVariables(sp);
+		ArrayList<String> constantes = getConstantes(sp);
+
+		//on ajoute les variables dans la hashmap du pattern actuel
+		for(String v: variables) {
+			if(!allVariable.contains(v)) {
+				allVariable.add(v);
+			}
+			res.put(v,new ArrayList<>());
+		}
+
+		if(constantes.size() == 2) { // deux constantes dans le pattern
+			int c1 = this.dictionnaire.getValue(constantes.get(0));
+			int c2 = this.dictionnaire.getValue(constantes.get(1));
+
+			if(!memory.containsKey(variables.get(0))) {
+				memory.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
+				res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+			}else {
+				for(Integer mem : memory.get(variables.get(0))) {
+					if(index.getIndex().get(c1).get(c2).contains(mem)) {
+						res.get(variables.get(0)).add(mem);
+					}else {
+						memory.get(variables.get(0)).remove(mem);
+					}
 				}
 			}
 		}
