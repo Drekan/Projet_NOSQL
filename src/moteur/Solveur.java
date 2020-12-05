@@ -1147,16 +1147,18 @@ public class Solveur {
 		ParsedQuery pq = sparqlParser.parseQuery(req, null);
 		List<StatementPattern> patterns = StatementPatternCollector.process(pq.getTupleExpr());
 
-		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> allResults = new HashMap<>();
-		// Cette structure permet d'obtenir tous les résultats pour toutes les variables pour tous les patterns
-		//Clé = la valeur recherchée
-		//Valeurs = un ensemble d'ensembles de résultats pour chaque pattern
+		//pour chaque pattern, on a les valeurs possible de toutes ses variables
+		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
 
 		this.options.diagnostic("-- Lecture de chaque pattern"+"\n");
-
+		
+		//on prend la première variable commune à tous les patterns
+		String variableJointure = starVariables.get(0);
+		ArrayList<Integer> valeursPossiblesVJ = new ArrayList<>();
 		ArrayList<String> allVariable = new ArrayList<>();
+		Boolean first_pattern = true;
 		for(StatementPattern sp: patterns) {
-			allResults.put(sp,new HashMap<>());
+			resultsPerPattern.put(sp,new HashMap<>());
 
 			//on encode le pattern pour savoir quel index utiliser
 			String indexType = this.indexMap.get(this.encodePattern(sp));
@@ -1172,26 +1174,72 @@ public class Solveur {
 				if(!allVariable.contains(v)) {
 					allVariable.add(v);
 				}
-				allResults.get(sp).put(v,new ArrayList<>());
+				resultsPerPattern.get(sp).put(v,new ArrayList<>());
 			}
-
+			
 			if(constantes.size() == 2) { // deux constantes dans le pattern
 				int c1 = this.dictionnaire.getValue(constantes.get(0));
 				int c2 = this.dictionnaire.getValue(constantes.get(1));
-
-				allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
+				
+				if(index.getIndex().get(c1).containsKey(c2)) {
+					ArrayList<Integer> results = new ArrayList<>();
+					for(Integer r : index.getIndex().get(c1).get(c2)) {
+						if(first_pattern || valeursPossiblesVJ.contains(r)) {
+							results.add(r);
+							
+							if(first_pattern)
+								valeursPossiblesVJ.add(r);
+						}
+					}
+					valeursPossiblesVJ.retainAll(results);
+					resultsPerPattern.get(sp).put(variables.get(0),results);
+				}
+				
 			}
 			else if(constantes.size() == 1) { // une constante dans le pattern
+				// j'ai pso
 				int c1 = this.dictionnaire.getValue(constantes.get(0));
+				
+				//la jointure se fait sur s ou o
+				Boolean s = variableJointure.equals(variables.get(0)); 
+				Boolean o = !s;
+				
+				ArrayList<Integer> results = new ArrayList<>();
+				if(s) {
+					for(Integer subject : index.getIndex().get(c1).keySet()) {
+							if(first_pattern || valeursPossiblesVJ.contains(subject)) {
+								for(Integer object : index.getIndex().get(c1).get(subject)) {
+									results.add(subject);
+									resultsPerPattern.get(sp).get(variables.get(0)).add(subject);
+									resultsPerPattern.get(sp).get(variables.get(1)).add(object);
+									
+									if(first_pattern) {
+										valeursPossiblesVJ.add(subject);
+									}
+								}
+							}
+					}
+				}else { //o forcément vrai
+					for(Integer subject : index.getIndex().get(c1).keySet()) {
+						for(Integer object : index.getIndex().get(c1).get(subject)) {
+							if(first_pattern || valeursPossiblesVJ.contains(object)) {
+								results.add(object);
+								resultsPerPattern.get(sp).get(variables.get(0)).add(subject);
+								resultsPerPattern.get(sp).get(variables.get(1)).add(object);
+								
+								if(first_pattern) {
+									valeursPossiblesVJ.add(object);
+								}
+							}
 
-				Set<Integer> keys_c1 = index.getIndex().get(c1).keySet();
-				ArrayList<Integer> resO = new ArrayList();
-				for (int i : keys_c1) {
-					for(int j : index.getIndex().get(c1).get(i)) {
-						allResults.get(sp).get(variables.get(0)).add(i);
-						allResults.get(sp).get(variables.get(1)).add(j);
+						}
+
 					}
 				}
+				
+				//intersection
+				valeursPossiblesVJ.retainAll(results);
+				
 			}
 			else {
 				//Cas où il y a 3 variables
@@ -1204,13 +1252,14 @@ public class Solveur {
 				for(int s : spo.getIndex().keySet()) {
 					for(int p : spo.getIndex().get(s).keySet()) {
 						for(int o : spo.getIndex().get(s).get(p)) {
-							allResults.get(sp).get(variables.get(0)).add(s);
-							allResults.get(sp).get(variables.get(1)).add(p);
-							allResults.get(sp).get(variables.get(2)).add(o);
+							resultsPerPattern.get(sp).get(variables.get(0)).add(s);
+							resultsPerPattern.get(sp).get(variables.get(1)).add(p);
+							resultsPerPattern.get(sp).get(variables.get(2)).add(o);
 						}
 					}
 				}
 			}
+			first_pattern = false;
 		}
 
 		//avoir la variable qui apparait dans chaque pattern
@@ -1218,8 +1267,7 @@ public class Solveur {
 		//Dans allResults on a les résultats de chaque variable pour chaque pattern
 		//Ici on fait pour chaque variable l'intersection des résultats
 		//Ca nous permet d'obtenir pour chaque variable l'ensemble des résultas
-		ArrayList<ArrayList<String>> results = this.extractResults(starVariables.get(0), allResults);
-
+		ArrayList<ArrayList<String>> results = this.extractResults(starVariables.get(0), resultsPerPattern);
 
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
 		ArrayList<String> varToReturn = new ArrayList<>();
