@@ -142,18 +142,22 @@ public class Options {
 		this.star_queries=false;
 		this.diagnostic=false;
 
-		String line = Arrays.toString(args);
+		String line = "";
+		for(String arg : args) {
+			line+=arg+" ";
+		}
 		String[] options = line.split("-");
 		for(String opt: options){
+			//System.out.println("'"+opt+"'");
 			if(opt.contains("queries")){
-				this.setQueriesPath(opt.split("\"")[1]);
+				this.setQueriesPath(opt.split(" ")[1]);
 			}
-			if(opt.contains("data")){
-				this.setDataPath(opt.split("\"")[1]);
+			if(opt.contains("data")){  //data "datasets/500K.rdfxml" 
+				this.setDataPath(opt.split(" ")[1]);
 			}
 			if(opt.contains("output")){
 			    this.setOutput(true);
-			    String[] otp = opt.split("\"");
+			    String[] otp = opt.split(" ");
 			    if(otp.length==2){
                     this.setOutputPath(otp[1]);
                 }

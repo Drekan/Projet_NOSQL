@@ -88,7 +88,7 @@ public class Solveur {
 	public ArrayList<String> buildQueriesAL() {
 		String queriesPath = this.options.getQueriesPath();
 		try {
-			long startTime_i = System.nanoTime();
+			long startTime_i = System.currentTimeMillis();
 			File myObj = new File(queriesPath);
 			Scanner myReader = new Scanner(myObj);
 			ArrayList<String> queries = new ArrayList<>();
@@ -98,8 +98,8 @@ public class Solveur {
 					queries.add(data);
 				}
 			}
-			long timeSpent_i = System.nanoTime() - startTime_i;
-			this.stats.setQueriesReadTime((int)timeSpent_i/1000000);
+			long timeSpent_i = System.currentTimeMillis() - startTime_i;
+			this.stats.setQueriesReadTime((int)timeSpent_i);
 			return queries;
 
 		} catch (FileNotFoundException e) {
@@ -152,17 +152,35 @@ public class Solveur {
 
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
-
+		
+		long warm_time = 0;
 		if(options.getWarmPct()!=0){
+			long warm_start = System.currentTimeMillis();
 			this.warm(options.getWarmPct(),queries,optim_none);
+			warm_time = System.currentTimeMillis() - warm_start;
 		}
 
+		long shuffle_time = 0;
 		if(this.options.getShuffle()) {
+			long shuffle_start = System.currentTimeMillis();
 			this.options.diagnostic("Shuffle");
 			Collections.shuffle(queries);
+			shuffle_time = System.currentTimeMillis() - shuffle_start;
 		}
-
-		long startTime_i = System.nanoTime();
+		
+		long opt_time = warm_time + shuffle_time;
+		long startTime_i = System.currentTimeMillis();
+		
+		if(options.getExport_query_stats()) {
+			try {
+				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
+				myWriter.write("Requête" + "," + "Temps d'évaluation (ms)" + "," + "Nombre réponses" + "," + "Ordre évaluation" + "," + "selectivité" + "," + "Comparaison Jena"+"\n");
+				myWriter.close();
+			} catch (IOException e) {
+				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
+				e.printStackTrace();
+			}
+		}
 
 		for(String query: queries) {
 			this.options.diagnostic("\n-------------------------");
@@ -188,10 +206,11 @@ public class Solveur {
 			}
 
 		}
-		long timeSpent = System.nanoTime() - startTime_i;
-		this.stats.setWorkloadEvaluationTime(timeSec(timeSpent));
+		
+		long timeSpent = System.currentTimeMillis() - startTime_i;
+		this.stats.setWorkloadEvaluationTime((int)timeSpent);
 		this.stats.setQueriesNum(queries.size());
-		this.stats.setTotalTime(timeSec(prec_timeSpent)+timeSec(timeSpent));
+		this.stats.setTotalTime(prec_timeSpent+timeSpent+opt_time);
 
 		/*
 		if(options.getJena()) {
@@ -201,7 +220,7 @@ public class Solveur {
 			}
 		}
 		 */
-		if(options.getOutput()){
+		if(options.getExport_query_stats()){
 			this.stats.writeStats();
 		}
 
@@ -373,7 +392,7 @@ public class Solveur {
 	 * @param req
 	 */
 	public void solve(String req) throws MalformedQueryException{
-		long startTime = System.nanoTime();
+		long startTime = System.currentTimeMillis();
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(new SPARQLParser().parseQuery(req, null).getTupleExpr());
 
@@ -531,8 +550,7 @@ public class Solveur {
 			}
 		}
 
-		long timeSpent = System.nanoTime();
-		timeSpent = (timeSpent-startTime);
+		long timeSpent = System.currentTimeMillis() - startTime ;
 		this.options.diagnostic("TEMPS= "+ timeSpent + "ms");
 
 		String CSVResults = "";
@@ -544,6 +562,9 @@ public class Solveur {
 			}
 			CSVResults=CSVResults.substring(0,CSVResults.length()-1);
 			CSVResults+="\n";
+		}
+		if(timeSpent<1) {
+			timeSpent=1;
 		}
 		//TODO: vérifier evalOrder
 		this.traiterOptions(req,String.valueOf(queryResult),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
@@ -586,11 +607,11 @@ public class Solveur {
 	public void solveOptim(String req) throws MalformedQueryException {
 
 		//TODO: merge join
-		long startTime = System.nanoTime();
+		long startTime = System.currentTimeMillis();
 		String outputPath = this.options.getOutputPath();
 		this.options.diagnostic("\nRequete: "+req+"\n");
 
-		long resultatsPartielsStart = System.nanoTime();
+		long resultatsPartielsStart = System.currentTimeMillis();
 
 		SPARQLParser sparqlParser = new SPARQLParser();
 		ParsedQuery pq = sparqlParser.parseQuery(req, null);
@@ -626,18 +647,18 @@ public class Solveur {
 		
 
 		if(this.options.getDiagnostic()) {
-			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
+			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.currentTimeMillis()-resultatsPartielsStart))+"ms]");
 		}
 
-		long composantesConnexesStart = System.nanoTime();
+		long composantesConnexesStart = System.currentTimeMillis();
 
 		HashMap<StatementPattern,Integer> patternConnexes = buildComposantesConnexes(patterns);
 
 		if(this.options.getDiagnostic()) {
-			this.options.diagnostic("[Calcul des composantes connexes : "+((System.nanoTime()-composantesConnexesStart)/1000000)+"ms]");
+			this.options.diagnostic("[Calcul des composantes connexes : "+((System.currentTimeMillis()-composantesConnexesStart))+"ms]");
 		}
 
-		long mergeStart = System.nanoTime();
+		long mergeStart = System.currentTimeMillis();
 
 		ArrayList<ArrayList<ArrayList<String>>> mergedComponents = new ArrayList<>();
 		for(int composante : patternConnexes.values()) {
@@ -691,10 +712,10 @@ public class Solveur {
 		}
 
 		if(this.options.getDiagnostic()) {
-			this.options.diagnostic("[Merge des résultats partiels : "+((System.nanoTime()-mergeStart)/1000000)+"ms]");
+			this.options.diagnostic("[Merge des résultats partiels : "+(System.currentTimeMillis()-mergeStart)+"ms]");
 		}
 
-		long produitCartesienStart = System.nanoTime();
+		long produitCartesienStart = System.currentTimeMillis();
 
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
@@ -706,10 +727,10 @@ public class Solveur {
 		ArrayList<ArrayList<String>> queryResult = mergedComponents.get(0);
 
 		if(this.options.getDiagnostic()) {
-			System.out.println("[Produit cartésien de chaque composante : "+((System.nanoTime()-produitCartesienStart)/1000000)+"ms]");
+			System.out.println("[Produit cartésien de chaque composante : "+((System.currentTimeMillis()-produitCartesienStart)/1000000)+"ms]");
 		}
 
-		long formattageResultatStart = System.nanoTime();
+		long formattageResultatStart = System.currentTimeMillis();
 
 
 		//Cette structure nous permet d'avoir uniquement les variables à retourner (celles dans le SELECT)
@@ -730,13 +751,13 @@ public class Solveur {
 			}
 		}
 
-		long timeSpent = System.nanoTime();
-		timeSpent = (timeSpent-startTime);
-		int tS =((int)timeSpent/1000000);
-		this.stats.setOptimizationTime(tS); //TODO à changer
+		long timeSpent = System.currentTimeMillis() - startTime;
+		int tS =((int)timeSpent);
+		this.stats.setOptimizationTime(tS==0?1:tS); //TODO à changer
+		
 
 		if(this.options.getDiagnostic()) {
-			this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
+			this.options.diagnostic("[Formattage des résultats : "+((System.currentTimeMillis()-formattageResultatStart))+"ms]");
 		}
 
 
@@ -757,10 +778,12 @@ public class Solveur {
 				}
 				CSVResults=CSVResults.substring(0,CSVResults.length()-1);
 				CSVResults+="\n";
+				
 			}
 		}
-
-		this.stats.setIndexesNum(18); //TODO big warning
+		if(tS<1) {
+			tS=1;
+		}
 		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 		
 	}
@@ -915,7 +938,7 @@ public class Solveur {
 		long timeSpent = System.nanoTime();
 		timeSpent = (timeSpent-startTime);
 		int tS =((int)timeSpent/1000000);
-		this.stats.setOptimizationTime(tS); //TODO à changer
+		this.stats.setOptimizationTime(tS==0?1:tS); //TODO à changer
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Formattage des résultats : "+((System.nanoTime()-formattageResultatStart)/1000000)+"ms]");
@@ -941,8 +964,9 @@ public class Solveur {
 				CSVResults+="\n";
 			}
 		}
-
-		this.stats.setIndexesNum(18); //TODO big warning
+		if(tS<1) {
+			tS=1;
+		}
 		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 		
 	}
@@ -1138,7 +1162,7 @@ public class Solveur {
 	 * @throws MalformedQueryException
 	 */
 	public void solveStarQuery(String req, ArrayList<String> starVariables) throws MalformedQueryException {
-		long startTime = System.nanoTime();
+		long startTime = System.currentTimeMillis();
 		String outputPath = this.options.getOutputPath();
 		this.options.diagnostic("\nRequete: "+req+"\n");
 
@@ -1288,8 +1312,8 @@ public class Solveur {
 			}
 		}
 
-		long timeSpent = System.nanoTime() - startTime;
-		int tS = ((int)timeSpent/1000000);
+		long timeSpent = System.currentTimeMillis() - startTime;
+		int tS = ((int)timeSpent);
 
 		/*
 		this.options.diagnostic("--------Résultats--------");
@@ -1341,7 +1365,9 @@ public class Solveur {
 
 		writeQueryStat(req, tS.toString(),"","","",jenaString); //TODO
 		 */
-
+		if(tS<1) {
+			tS=1;
+		}
 		traiterOptions(req, String.valueOf(results.size()), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
 	}
 
@@ -1659,7 +1685,7 @@ public class Solveur {
 		if(this.options.getExport_query_stats()) {
 			try {
 				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
-				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison);
+				myWriter.write(req + "," + evalTime + "," + nbRep + "," + evalOrder + "," + selectivity + "," + jenaComparison+"\n");
 				myWriter.close();
 			} catch (IOException e) {
 				this.options.diagnostic("Erreur dans l'écriture du résultat de la requête");
@@ -1670,7 +1696,6 @@ public class Solveur {
 
 	public void traiterOptions(String req, String nbRep, String evalOrder, String selectivity,String CSVResults, String tS) {
 		String outputPath = this.options.getOutputPath();
-
 		if(options.getVerbose()) {
 			System.out.println("\n - Temps requete : "+ tS+"ms");
 		}
@@ -1696,8 +1721,11 @@ public class Solveur {
 				e.printStackTrace();
 			}
 		}
-
-		writeQueryStat(req, tS, nbRep, evalOrder,selectivity,jenaString); //TODO
+		
+		if(this.options.getExport_query_stats()) {
+			writeQueryStat(req, tS, nbRep, evalOrder,selectivity,jenaString);//TODO
+		}
+		 
 	}
 
 

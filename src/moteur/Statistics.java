@@ -81,6 +81,10 @@ public class Statistics {
 	public void setWorkloadEvaluationTime(int workloadEvaluationTime) {
 		this.workloadEvaluationTime = workloadEvaluationTime;
 	}
+	
+	public void addWorkloadEvaluationTime(int workloadEvaluationTime) {
+		this.workloadEvaluationTime += workloadEvaluationTime;
+	}
 
 	public int getOptimizationTime() {
 		return optimizationTime;
@@ -117,11 +121,24 @@ public class Statistics {
 	public void writeStats() {
 		//TODO: mieux gérer les NON_DISPONIBLE
 		try {
-			FileWriter myWriter = new FileWriter(outputPath+"queriesStat.csv");
+			FileWriter myWriter = new FileWriter(outputPath+"workloadStats.csv");
 			String optim = String.valueOf(optimizationTime);
 			if(optimizationTime==0){
 				optim = "NON_DISPONIBLE";
 			}
+			myWriter.write(
+					"dataPath"+","+
+							"queriesPath"+","+
+							"RDFTripleNum"+","+
+							"queriesNum"+","+
+							"queriesReadTime"+","+
+							"dicCreationTime"+","+
+							"indexesNum"+","+
+							"indexesCreationTotalTime"+","+
+							"workloadEvaluationTime"+","+
+							"optim"+","+
+							"totalTime"+"\n"
+					);
 			myWriter.write(
 					dataPath+","+
 							queriesPath+","+

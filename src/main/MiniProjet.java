@@ -19,7 +19,7 @@ public class MiniProjet {
 	 * @throws MalformedQueryException
 	 */
 	public static void main(String[] args) throws IOException, MalformedQueryException {
-		long startTime_i = System.nanoTime();
+		long startTime_i = System.currentTimeMillis();
 
 		//I. Définition des options
 		Options options = new Options(args);
@@ -47,7 +47,7 @@ public class MiniProjet {
 		Solveur solveur = new Solveur(dataStructure, options, statistiques);
 
 		//TODO: à améliorer
-		long timeSpent_i = System.nanoTime() - startTime_i;
-		solveur.traiterQueries((int)timeSpent_i/1000000);
+		long timeSpent_i = System.currentTimeMillis() - startTime_i;
+		solveur.traiterQueries(timeSpent_i);
 	}
 }
