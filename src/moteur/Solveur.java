@@ -46,6 +46,8 @@ public class Solveur {
 	private Options options;
 
 	private Statistics stats;
+	
+	private int skipped = 0;
 
 	/**
 	 * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
@@ -370,19 +372,26 @@ public class Solveur {
 		result.get(0).addAll(concat);
 
 		int i = 0;
-		for(ArrayList<T> leftLine : left) {
-			int j = 0;
-			for(ArrayList<T> rightLine : right){
-				if(i!=0 && j!=0) {
-					concat = new ArrayList<>(leftLine);
-					concat.addAll(rightLine);
-					result.add(concat);
-				}
+		int nb = 0;
+		if((left.size()*right.size())<750000){
+			for(ArrayList<T> leftLine : left) {
+				int j = 0;
+				for(ArrayList<T> rightLine : right){
+					if(i!=0 && j!=0) {
+						nb++;
+						concat = new ArrayList<>(leftLine);
+						concat.addAll(rightLine);
+						result.add(concat);
+					}
 
-				j++;
+					j++;
+				}
+				i++;
 			}
-			i++;
+		}else {
+			this.skipped++;
 		}
+
 
 		return result;
 	}
@@ -716,7 +725,7 @@ public class Solveur {
 		}
 
 		long produitCartesienStart = System.currentTimeMillis();
-
+		
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
 			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
@@ -996,14 +1005,16 @@ public class Solveur {
 		if(constantes.size() == 2) { // deux constantes dans le pattern
 			int c1 = this.dictionnaire.getValue(constantes.get(0));
 			int c2 = this.dictionnaire.getValue(constantes.get(1));
-
-			if(!memory.containsKey(variables.get(0))) {
-				memory.put(variables.get(0), new ArrayList<>());
-				memory.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
-				res.put(variables.get(0), index.getIndex().get(c1).get(c2));
-			}else {
-				if(memory.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))) {
+			
+			if(index.getIndex().get(c1).containsKey(c2)) {
+				if(!memory.containsKey(variables.get(0))) {
+					memory.put(variables.get(0), new ArrayList<>());
+					memory.put(variables.get(0), new ArrayList<>(index.getIndex().get(c1).get(c2)));
 					res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+				}else {
+					if(memory.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))) {
+						res.put(variables.get(0), index.getIndex().get(c1).get(c2));
+					}
 				}
 			}
 		}
@@ -1621,6 +1632,7 @@ public class Solveur {
 	 * @return
 	 */
 	public double selectivity(StatementPattern sp) {
+		double selectivity = 0;
 		//Il faut récupérer la valeur dans l'index
 		//les termes de la requete sont recuperes...
 		ArrayList<Var> varList = new ArrayList<>();
@@ -1649,18 +1661,23 @@ public class Solveur {
 		String i1 = indexType.substring(0,1);
 
 		String i2 = indexType.substring(1,2);
+		
+		double totalValuesNumber = this.indexes.get("spo").getValuesNumber().doubleValue();
 
 		if (constantes.size() == 2) {
-			//System.out.println(this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)));
-			return this.indexes.get(indexType).getIndex2().get(returnConvertCst(i1,s,p,o)).get(returnConvertCst(i2,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
+			int c1 = returnConvertCst(i1,s,p,o);
+			int c2 = returnConvertCst(i2,s,p,o);
+			
+			if(this.indexes.get(indexType).getIndex2().get(c1).keySet().contains(c2))
+				selectivity = this.indexes.get(indexType).getIndex2().get(c1).get(c2).doubleValue()/totalValuesNumber;
 		}
 
 		if (constantes.size() == 1) {
 			//System.out.println(this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)));
-			return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/this.indexes.get("spo").getValuesNumber().doubleValue();
+			return this.indexes.get(indexType).getIndex1().get(returnConvertCst(i1,s,p,o)).doubleValue()/totalValuesNumber;
 		}
 
-		return 0;
+		return selectivity;
 	}
 
 	public int returnConvertCst(String i, Var s, Var p, Var o){
