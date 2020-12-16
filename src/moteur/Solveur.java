@@ -48,6 +48,8 @@ public class Solveur {
 	private Statistics stats;
 	
 	private int skipped = 0;
+	
+	private Model model;
 
 	/**
 	 * indexMap : structure qui permet de savoir quel index utiliser en fonction du pattern que l'on a.
@@ -59,6 +61,10 @@ public class Solveur {
 	private HashMap<String,String> indexMap;
 
 	public Solveur(DataStructure dataStructure, Options options, Statistics stats){
+		this.model = ModelFactory.createDefaultModel();
+		InputStream in = FileManager.get().open(options.getDataPath());
+		model.read(in, null,"RDF/XML");
+		
 		this.indexMap = new HashMap<>();
 		this.options = options;
 		this.dictionnaire = dataStructure.getDico();
@@ -96,7 +102,7 @@ public class Solveur {
 			ArrayList<String> queries = new ArrayList<>();
 			while (myReader.hasNextLine()) {
 				String data = myReader.nextLine();
-				if(!data.equals("")) {
+				if(!data.isEmpty()) {
 					queries.add(data);
 				}
 			}
@@ -112,6 +118,7 @@ public class Solveur {
 
 	public void supprimerOutput(){
 		try{
+			
 			if(this.options.getExport_query_stats()){
 				File stats = new File (this.options.getOutputPath()+"queryStat.csv");
 				if(stats.delete()){
@@ -120,15 +127,16 @@ public class Solveur {
 					this.options.diagnostic("Opération de suppression echouée");
 				}
 			}
-
+			/*
 			if(this.options.getExport_query_results()){
-				File result = new File (this.options.getOutputPath()+"queryResult.csv");
+				File result = new File (this.options.getOutputPath()+"workloadStats.csv");
 				if(result.delete()){
 					this.options.diagnostic(result.getName() + " est supprimé.");
 				}else{
 					this.options.diagnostic("Opération de suppression echouée");
 				}
 			}
+			*/
 		}
 		catch (Exception e){
 			//?
@@ -201,7 +209,18 @@ public class Solveur {
 				}
 				else{
 					this.options.diagnostic("- M1");
-					solveStarQuery(query,starVariables);
+					if(this.options.getStar_queries()) {
+						solveStarQuery(query,starVariables);
+					}
+					else {
+						if (!optim_none) {
+							this.options.diagnostic("- M2b");
+							solveOptim(query);
+						} else {
+							this.options.diagnostic("- M2a");
+							solve(query);
+						}
+					}
 				}
 			}else {
 				this.options.diagnostic("\t-> non valide (contient des ressources non présentes dans le dataset)");
@@ -226,7 +245,7 @@ public class Solveur {
 			this.stats.writeStats();
 		}
 
-		if(options.getVerbose()) {
+		if(options.getVerbose() || options.getWorkload_time()) {
 			System.out.println("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
 		}
 
@@ -373,7 +392,7 @@ public class Solveur {
 
 		int i = 0;
 		int nb = 0;
-		if((left.size()*right.size())<750000){
+		if((left.size()*right.size())<100000){
 			for(ArrayList<T> leftLine : left) {
 				int j = 0;
 				for(ArrayList<T> rightLine : right){
@@ -637,7 +656,7 @@ public class Solveur {
 		for(StatementPattern sp: patterns) {
 			double slct = selectivity(sp);
 			selectivities.put(sp,slct);
-			selectivityTxt+=sp.toString()+" "+slct+"\n";
+			selectivityTxt+=sp.toString().replace("\n","").replace(",", "")+" => "+slct+" | ";
 		}
 
 		ArrayList<StatementPattern> alreadySolved = new ArrayList<>();
@@ -1551,13 +1570,8 @@ public class Solveur {
 	 * @return
 	 */
 	public String jenaSolve(String req){
-		Model model = ModelFactory.createDefaultModel();
-		InputStream in = FileManager.get().open(this.options.getDataPath());
-
-		model.read(in, null,"RDF/XML");
-
 		Query query = QueryFactory.create(req);
-		QueryExecution qexec = QueryExecutionFactory.create(query,model);
+		QueryExecution qexec = QueryExecutionFactory.create(query,this.model);
 		try {
 			ResultSet rs = qexec.execSelect();
 			//ResultSetFormatter.out(System.out, rs, query);

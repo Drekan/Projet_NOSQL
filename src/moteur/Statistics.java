@@ -1,5 +1,6 @@
 package moteur;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -121,24 +122,29 @@ public class Statistics {
 	public void writeStats() {
 		//TODO: mieux gérer les NON_DISPONIBLE
 		try {
-			FileWriter myWriter = new FileWriter(outputPath+"workloadStats.csv");
+			FileWriter myWriter = new FileWriter(outputPath+"workloadStats.csv",true);
 			String optim = String.valueOf(optimizationTime);
 			if(optimizationTime==0){
 				optim = "NON_DISPONIBLE";
 			}
-			myWriter.write(
-					"dataPath"+","+
-							"queriesPath"+","+
-							"RDFTripleNum"+","+
-							"queriesNum"+","+
-							"queriesReadTime"+","+
-							"dicCreationTime"+","+
-							"indexesNum"+","+
-							"indexesCreationTotalTime"+","+
-							"workloadEvaluationTime"+","+
-							"optim"+","+
-							"totalTime"+"\n"
-					);
+			File workloadStats = new File(outputPath+"workloadStats.csv");
+			if(workloadStats.length()==0) {
+				myWriter.write(
+						"dataPath"+","+
+								"queriesPath"+","+
+								"RDFTripleNum"+","+
+								"queriesNum"+","+
+								"queriesReadTime"+","+
+								"dicCreationTime"+","+
+								"indexesNum"+","+
+								"indexesCreationTotalTime"+","+
+								"workloadEvaluationTime"+","+
+								"optim"+","+
+								"totalTime"+"\n"
+						);
+				
+			}
+
 			myWriter.write(
 					dataPath+","+
 							queriesPath+","+
@@ -150,7 +156,7 @@ public class Statistics {
 							indexesCreationTotalTime+","+
 							workloadEvaluationTime+","+
 							optim+","+
-							totalTime+","
+							totalTime+"\n"
 					);
 
 			myWriter.close();

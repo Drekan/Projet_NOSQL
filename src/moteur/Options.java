@@ -16,6 +16,7 @@ public class Options {
 	Boolean optim_none;
 	Boolean star_queries;
 	Boolean diagnostic;
+	Boolean workload_time;
 
 	public String getQueriesPath() {
 		return queriesPath;
@@ -68,6 +69,9 @@ public class Options {
 	public Boolean getDiagnostic() {
 		return this.diagnostic;
 	}
+	public Boolean getWorkload_time() {
+		return this.workload_time;
+	}
 
 
 	public void setQueriesPath(String queriesPath) {
@@ -117,6 +121,10 @@ public class Options {
 		this.star_queries = star_queries;
 	}
 	
+	public void setWorkload_time(Boolean workload_time) {
+		this.workload_time = workload_time;
+	}
+	
 	public void setDiagnostic(Boolean diag) {
 		this.diagnostic = diag;
 	}
@@ -141,6 +149,7 @@ public class Options {
 		this.optim_none=false;
 		this.star_queries=false;
 		this.diagnostic=false;
+		this.workload_time=false;
 
 		String line = "";
 		for(String arg : args) {
@@ -149,43 +158,46 @@ public class Options {
 		String[] options = line.split("-");
 		for(String opt: options){
 			//System.out.println("'"+opt+"'");
-			if(opt.contains("queries")){
+			if(opt.startsWith("queries")){
 				this.setQueriesPath(opt.split(" ")[1]);
 			}
-			if(opt.contains("data")){  //data "datasets/500K.rdfxml" 
+			if(opt.startsWith("data")){  //data "datasets/500K.rdfxml" 
 				this.setDataPath(opt.split(" ")[1]);
 			}
-			if(opt.contains("output")){
+			if(opt.startsWith("output")){
 			    this.setOutput(true);
 			    String[] otp = opt.split(" ");
 			    if(otp.length==2){
                     this.setOutputPath(otp[1]);
                 }
 			}
-			if(opt.contains("verbose")){
+			if(opt.startsWith("verbose")){
 				this.setVerbose(true);
 			}
-			if(opt.contains("export_query_stats")){
+			if(opt.startsWith("export_query_stats")){
 				this.setExport_query_stats(true);
 			}
-			if(opt.contains("export_query_results")){
+			if(opt.startsWith("export_query_results")){
 				this.setExport_query_results(true);
 			}
-			if(opt.contains("jena")){
+			if(opt.startsWith("jena")){
 				this.setJena(true);
 			}
-			if(opt.contains("shuffle")){
+			if(opt.startsWith("shuffle")){
 				this.setShuffle(true);
 			}
-			if(opt.contains("warm")){
+			if(opt.startsWith("warm")){
 				//TODO: à vérifier que ça marche bien
 				this.setWarmPct(Float.parseFloat(opt.split("\\s+")[1]));
 			}
-			if(opt.contains("optim_none")){
+			if(opt.startsWith("optim_none")){
 				this.setOptim_none(true);
 			}
-			if(opt.contains("star_queries")){
+			if(opt.startsWith("star_queries")){
 				this.setStar_queries(true);
+			}
+			if(opt.startsWith("workload_time")){
+				this.setWorkload_time(true);
 			}
 		}
 	}

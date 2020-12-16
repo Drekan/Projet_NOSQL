@@ -1,5 +1,0 @@
-Requête,Temps d'évaluation (ms),Nombre réponses,Ordre évaluation,selectivité,Comparaison Jena
-SELECT ?v0 WHERE {	?v0 <http://schema.org/eligibleRegion> <http://db.uwaterloo.ca/~galuc/wsdbm/Country2> .},2,568,QueryOrder,NON_DISPONIBLE,true
-SELECT ?v0 WHERE {	?v0 <http://schema.org/eligibleRegion> <http://db.uwaterloo.ca/~galuc/wsdbm/Country17> .},1,91,QueryOrder,NON_DISPONIBLE,true
-SELECT ?v0 WHERE {	?v0 <http://schema.org/eligibleRegion> <http://db.uwaterloo.ca/~galuc/wsdbm/Country19> .},1,77,QueryOrder,NON_DISPONIBLE,true
-SELECT ?v0 ?v1 WHERE {	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/likes> ?v1 .	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/subscribes> <http://db.uwaterloo.ca/~galuc/wsdbm/Website69> .},58,75,QueryOrder,NON_DISPONIBLE,true
