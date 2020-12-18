@@ -1598,7 +1598,7 @@ public class Solveur {
 		if(jena.size() == ourResult.size()) {
 			// on teste la corection
 			for (String res : ourResult) {
-				res=res.substring(0,res.length()-1);
+				res=res.substring(0,res.length());
 				if(reordered) {
 					res = reorder(res,tailleMax, getOrder);
 				}
@@ -1607,6 +1607,9 @@ public class Solveur {
 					if(this.options.getCheckJena()){
 						System.out.println("  Pas correct");
 						System.out.println(res);
+						System.out.println("JENA res :");
+						System.out.println(jena.toString());
+						System.out.println("FIN JENA res");
 					}
 					return false;
 					//pas correct
