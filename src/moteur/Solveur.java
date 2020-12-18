@@ -1602,14 +1602,14 @@ public class Solveur {
 				if(reordered) {
 					res = reorder(res,tailleMax, getOrder);
 				}
-
-				if (!jena.contains(res)) {
+				
+				jena.replaceAll( e -> e.replaceAll("\n", ""));
+				jena.replaceAll( e -> e.replaceAll("\r", ""));
+				
+				if (!jena.contains(res.replaceAll("\n", "").replace("\r", ""))) {
 					if(this.options.getCheckJena()){
 						System.out.println("  Pas correct");
 						System.out.println(res);
-						System.out.println("JENA res :");
-						System.out.println(jena.toString());
-						System.out.println("FIN JENA res");
 					}
 					return false;
 					//pas correct
@@ -1621,6 +1621,9 @@ public class Solveur {
 			return true;
 		}
 		else {
+			System.out.println("Jena : "+jena.size());
+			System.out.println(jena.toString());
+			System.out.println("Us : "+ourResult.size());
 			if(this.options.getCheckJena()){
 				System.out.println("  Pas complet");
 			}
