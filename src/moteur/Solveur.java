@@ -89,6 +89,7 @@ public class Solveur {
 		return  this.stats;
 	}
 
+
 	/**
 	 * Construit et retourne un arraylist contenant toutes les requetes
 	 * @return
@@ -109,12 +110,13 @@ public class Solveur {
 			long timeSpent_i = System.currentTimeMillis() - startTime_i;
 			this.stats.setQueriesReadTime((int)timeSpent_i);
 			return queries;
-
+	
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
+
 
 	public void supprimerOutput(){
 		try{
@@ -159,7 +161,6 @@ public class Solveur {
 	 */
 	public void traiterQueries(long prec_timeSpent) throws MalformedQueryException {
 		supprimerOutput();
-
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
 		
@@ -392,24 +393,22 @@ public class Solveur {
 
 		int i = 0;
 		int nb = 0;
-		if((left.size()*right.size())<100000){
-			for(ArrayList<T> leftLine : left) {
-				int j = 0;
-				for(ArrayList<T> rightLine : right){
-					if(i!=0 && j!=0) {
-						nb++;
-						concat = new ArrayList<>(leftLine);
-						concat.addAll(rightLine);
-						result.add(concat);
-					}
-
-					j++;
+	
+		for(ArrayList<T> leftLine : left) {
+			int j = 0;
+			for(ArrayList<T> rightLine : right){
+				if(i!=0 && j!=0) {
+					nb++;
+					concat = new ArrayList<>(leftLine);
+					concat.addAll(rightLine);
+					result.add(concat);
 				}
-				i++;
+
+				j++;
 			}
-		}else {
-			this.skipped++;
+			i++;
 		}
+
 
 
 		return result;
@@ -595,7 +594,7 @@ public class Solveur {
 			timeSpent=1;
 		}
 		//TODO: vérifier evalOrder
-		this.traiterOptions(req,String.valueOf(queryResult),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
+		this.traiterOptions(req,String.valueOf(queryResult.size()-1),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
 	}
 
 	public HashMap<StatementPattern,Integer> buildComposantesConnexes(List<StatementPattern> patterns) throws MalformedQueryException{
@@ -689,54 +688,58 @@ public class Solveur {
 		long mergeStart = System.currentTimeMillis();
 
 		ArrayList<ArrayList<ArrayList<String>>> mergedComponents = new ArrayList<>();
+		ArrayList<Integer> composantesConnues = new ArrayList<>();
 		for(int composante : patternConnexes.values()) {
-			ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
+			if(!composantesConnues.contains(composante)) {
+				composantesConnues.add(composante);
+				ArrayList<HashMap<String,ArrayList<Integer>>> toMerge = new ArrayList<>();
 
-			//on ajoute les patterns de même composante à toMerge
-			for(StatementPattern sp : patternConnexes.keySet()) {
-				if(patternConnexes.get(sp).equals(composante)) {
-					toMerge.add(resultsPerPattern.get(sp));
-				}
-			}
-
-			while(toMerge.size()>1) {
-				HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
-
-				HashMap<String,ArrayList<Integer>> second = new HashMap<>();
-				int idx_second = 0;
-				String commonVariable = "";
-				while(second.isEmpty()) {
-					commonVariable = getCommonVariable(first,toMerge.get(idx_second));
-					if(!commonVariable.equals("")) {
-						second =toMerge.remove(idx_second);
+				//on ajoute les patterns de même composante à toMerge
+				for(StatementPattern sp : patternConnexes.keySet()) {
+					if(patternConnexes.get(sp).equals(composante)) {
+						toMerge.add(resultsPerPattern.get(sp));
 					}
-					idx_second++;
 				}
 
-				toMerge.add(this.mergeGeneral(first, second, commonVariable));
-			}
+				while(toMerge.size()>1) {
+					HashMap<String,ArrayList<Integer>> first = toMerge.remove(0);
 
-			//on reformate en matrice de String
-			ArrayList<ArrayList<String>> merged = new ArrayList<>();
+					HashMap<String,ArrayList<Integer>> second = new HashMap<>();
+					int idx_second = 0;
+					String commonVariable = "";
+					while(second.isEmpty()) {
+						commonVariable = getCommonVariable(first,toMerge.get(idx_second));
+						if(!commonVariable.equals("")) {
+							second =toMerge.remove(idx_second);
+						}
+						idx_second++;
+					}
 
-			//taille de la première colonne de la fusion des patterns courants
-			int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
-			//initialisation de chaque ligne de la matrice résultat
-			for(int i = 0; i<= size;i++) {
-				merged.add(new ArrayList());
-			}
-
-			for(String variable : toMerge.get(0).keySet()) {
-				int currentLine = 0;
-				merged.get(currentLine).add(variable);
-
-				for(int value : toMerge.get(0).get(variable)) {
-					currentLine++;
-					merged.get(currentLine).add(this.dictionnaire.getValue(value));
+					toMerge.add(this.mergeGeneral(first, second, commonVariable));
 				}
-			}
 
-			mergedComponents.add(merged);
+				//on reformate en matrice de String
+				ArrayList<ArrayList<String>> merged = new ArrayList<>();
+
+				//taille de la première colonne de la fusion des patterns courants
+				int size = toMerge.get(0).get(toMerge.get(0).keySet().iterator().next()).size();
+				//initialisation de chaque ligne de la matrice résultat
+				for(int i = 0; i<= size;i++) {
+					merged.add(new ArrayList());
+				}
+
+				for(String variable : toMerge.get(0).keySet()) {
+					int currentLine = 0;
+					merged.get(currentLine).add(variable);
+
+					for(int value : toMerge.get(0).get(variable)) {
+						currentLine++;
+						merged.get(currentLine).add(this.dictionnaire.getValue(value));
+					}
+				}
+
+				mergedComponents.add(merged);
+			}
 		}
 
 		if(this.options.getDiagnostic()) {
@@ -744,12 +747,18 @@ public class Solveur {
 		}
 
 		long produitCartesienStart = System.currentTimeMillis();
-		
+		//TOREMOVE
+		//System.out.println("Nombre de composantes à merge : "+mergedComponents.size()+"\n");
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
 			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
-
-			mergedComponents.add(produitCartesien(left,right));
+			
+			
+			ArrayList<ArrayList<String>> resultMerge = produitCartesien(left,right);
+			
+			//System.out.println("\tMERGE gauche("+left.size()+") , droite("+right.size()+"");
+			//System.out.println("\t --> résultat de taille "+resultMerge.size()+"\n");
+			mergedComponents.add(resultMerge);
 		}
 
 		ArrayList<ArrayList<String>> queryResult = mergedComponents.get(0);
@@ -812,7 +821,7 @@ public class Solveur {
 		if(tS<1) {
 			tS=1;
 		}
-		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
+		traiterOptions(req, String.valueOf(queryResult.size()-1),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 		
 	}
 	
@@ -1398,7 +1407,7 @@ public class Solveur {
 		if(tS<1) {
 			tS=1;
 		}
-		traiterOptions(req, String.valueOf(results.size()), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
+		traiterOptions(req, String.valueOf(results.size()-1), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
 	}
 
 	//TODO : dans le cas où toutes les variables ne sont pas à projeter, éviter de considérer les variables qui ne
