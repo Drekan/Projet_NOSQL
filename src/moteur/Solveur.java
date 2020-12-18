@@ -159,7 +159,6 @@ public class Solveur {
 	 */
 	public void traiterQueries(long prec_timeSpent) throws MalformedQueryException {
 		supprimerOutput();
-
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
 		
@@ -595,7 +594,7 @@ public class Solveur {
 			timeSpent=1;
 		}
 		//TODO: vérifier evalOrder
-		this.traiterOptions(req,String.valueOf(queryResult),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
+		this.traiterOptions(req,String.valueOf(queryResult.size()-1),"QueryOrder","NON_DISPONIBLE", CSVResults, String.valueOf(timeSpent));
 	}
 
 	public HashMap<StatementPattern,Integer> buildComposantesConnexes(List<StatementPattern> patterns) throws MalformedQueryException{
@@ -812,7 +811,7 @@ public class Solveur {
 		if(tS<1) {
 			tS=1;
 		}
-		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
+		traiterOptions(req, String.valueOf(queryResult.size()-1),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
 		
 	}
 	
@@ -1398,7 +1397,7 @@ public class Solveur {
 		if(tS<1) {
 			tS=1;
 		}
-		traiterOptions(req, String.valueOf(results.size()), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
+		traiterOptions(req, String.valueOf(results.size()-1), "QueryOrder","NON_DISPONIBLE",CSVResults,String.valueOf(tS));
 	}
 
 	//TODO : dans le cas où toutes les variables ne sont pas à projeter, éviter de considérer les variables qui ne
