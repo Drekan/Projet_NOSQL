@@ -208,9 +208,9 @@ public class Solveur {
 					}
 				}
 				else{
-					this.options.diagnostic("- M1");
 					if(this.options.getStar_queries()) {
 						solveStarQuery(query,starVariables);
+						this.options.diagnostic("- M1");
 					}
 					else {
 						if (!optim_none) {
@@ -1552,16 +1552,40 @@ public class Solveur {
 
 	public boolean jenaComparison(String req, String ourResultCSV){
 		//TODO ATTENTION AUX "EXCES"
+		//System.out.println(ourResultCSV);
+		System.out.println(jenaSolve(req));
+		System.out.println("--------");
+		System.out.println(ourResultCSV);
+
 		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
 		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
+		System.out.println(jena.get(0));
+		System.out.println(ourResult.get(0));
+		jena.remove(0);
+		ourResult.remove(0);
 
-		return jena.size() == ourResult.size();
-				/*
-		for(String j: jena){
-			if (!ourResult.contains(j)){
-				return false;
+		System.out.println();
+
+		System.out.println("Tailles JO: "+jena.size()+"--"+ourResult.size());
+		//s'il est complet
+		if(jena.size() == ourResult.size()) {
+			// on teste la corection
+			//TODO: ordre
+			for (String j : ourResult) {
+				//TODO: vérifier l'intérieur
+				j=j.substring(0,j.length());
+				if (!jena.contains(j)) {
+					System.out.println("JenaFalse: "+j);
+					return false;
+					//pas correct
+				}
+				System.out.println("ok");
 			}
-		}*/
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	/**
@@ -1739,6 +1763,9 @@ public class Solveur {
 			}
 			else{
 				jenaString="false";
+			}
+			if(this.options.diagnostic){
+				System.out.println("JENA: "+jenaString);
 			}
 		}
 

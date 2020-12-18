@@ -25,14 +25,14 @@ public class MiniProjet {
 		Options options = new Options(args);
 
 		//Options à commenter
-		/*
+
 		options.setVerbose(true);
-		options.setExport_query_results(true);
-		options.setExport_query_stats(true);
+		//options.setExport_query_results(true);
+		//options.setExport_query_stats(true);
 		options.setJena(true);
 		options.setOptim_none(false);
-		//options.setDiagnostic(true);
-		options.setDataPath("datasets/500K.rdfxml");*/
+		options.setDiagnostic(true);
+		options.setDataPath("datasets/500K.rdfxml");
 
 		Statistics statistiques = new Statistics(options);
 
