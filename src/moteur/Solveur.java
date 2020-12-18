@@ -46,9 +46,9 @@ public class Solveur {
 	private Options options;
 
 	private Statistics stats;
-	
+
 	private int skipped = 0;
-	
+
 	private Model model;
 
 	/**
@@ -64,7 +64,7 @@ public class Solveur {
 		this.model = ModelFactory.createDefaultModel();
 		InputStream in = FileManager.get().open(options.getDataPath());
 		model.read(in, null,"RDF/XML");
-		
+
 		this.indexMap = new HashMap<>();
 		this.options = options;
 		this.dictionnaire = dataStructure.getDico();
@@ -110,7 +110,7 @@ public class Solveur {
 			long timeSpent_i = System.currentTimeMillis() - startTime_i;
 			this.stats.setQueriesReadTime((int)timeSpent_i);
 			return queries;
-	
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -120,7 +120,7 @@ public class Solveur {
 
 	public void supprimerOutput(){
 		try{
-			
+
 			if(this.options.getExport_query_stats()){
 				File stats = new File (this.options.getOutputPath()+"queryStat.csv");
 				if(stats.delete()){
@@ -163,7 +163,7 @@ public class Solveur {
 		supprimerOutput();
 		ArrayList<String> queries = buildQueriesAL();
 		boolean optim_none = this.options.getOptim_none();
-		
+
 		long warm_time = 0;
 		if(options.getWarmPct()!=0){
 			long warm_start = System.currentTimeMillis();
@@ -178,10 +178,10 @@ public class Solveur {
 			Collections.shuffle(queries);
 			shuffle_time = System.currentTimeMillis() - shuffle_start;
 		}
-		
+
 		long opt_time = warm_time + shuffle_time;
 		long startTime_i = System.currentTimeMillis();
-		
+
 		if(options.getExport_query_stats()) {
 			try {
 				FileWriter myWriter = new FileWriter(this.options.getOutputPath() + "queryStat.csv",true);
@@ -228,7 +228,7 @@ public class Solveur {
 			}
 
 		}
-		
+
 		long timeSpent = System.currentTimeMillis() - startTime_i;
 		this.stats.setWorkloadEvaluationTime((int)timeSpent);
 		this.stats.setQueriesNum(queries.size());
@@ -251,23 +251,23 @@ public class Solveur {
 		}
 
 	}
-	
+
 	//on compare deux version de solveOptim
 	public void comparer2solveOptim(int nbIteration) throws MalformedQueryException {
 		ArrayList<String> queries = buildQueriesAL();
-		
+
 		long totalTimeA = 0, totalTimeB = 0;
-		
+
 		for(int i = 0; i<nbIteration;i++) {
 			System.out.println((i+1)+"/"+nbIteration);
 			for(String query : queries) {
 				Boolean order = new Random().nextBoolean();
-				
+
 				if(order) {
 					long startA = System.nanoTime();
 					solveOptim(query);
 					totalTimeA += System.nanoTime()-startA;
-					
+
 					long startB = System.nanoTime();
 					solveOptim2(query);
 					totalTimeB += System.nanoTime()-startB;
@@ -275,7 +275,7 @@ public class Solveur {
 					long startB = System.nanoTime();
 					solveOptim2(query);
 					totalTimeB += System.nanoTime()-startB;
-					
+
 					long startA = System.nanoTime();
 					solveOptim(query);
 					totalTimeA += System.nanoTime()-startA;
@@ -284,10 +284,10 @@ public class Solveur {
 			}
 		}
 
-		
+
 		System.out.println("Temps total solveOptim: "+(double)totalTimeA/1000000000+" s");
 		System.out.println("Temps total solveOptim2: "+(double)totalTimeB/1000000000+" s");
-		
+
 	}
 
 	public Boolean isValid(String query) throws MalformedQueryException {
@@ -393,7 +393,7 @@ public class Solveur {
 
 		int i = 0;
 		int nb = 0;
-	
+
 		for(ArrayList<T> leftLine : left) {
 			int j = 0;
 			for(ArrayList<T> rightLine : right){
@@ -671,7 +671,7 @@ public class Solveur {
 
 			resultsPerPattern.put(spCurrent,getResult(spCurrent, resultsPerVariable));
 		}
-		
+
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.currentTimeMillis()-resultatsPartielsStart))+"ms]");
@@ -752,10 +752,10 @@ public class Solveur {
 		while(mergedComponents.size()>1) {
 			ArrayList<ArrayList<String>> left = mergedComponents.remove(0);
 			ArrayList<ArrayList<String>> right = mergedComponents.remove(0);
-			
-			
+
+
 			ArrayList<ArrayList<String>> resultMerge = produitCartesien(left,right);
-			
+
 			//System.out.println("\tMERGE gauche("+left.size()+") , droite("+right.size()+"");
 			//System.out.println("\t --> résultat de taille "+resultMerge.size()+"\n");
 			mergedComponents.add(resultMerge);
@@ -791,7 +791,7 @@ public class Solveur {
 		long timeSpent = System.currentTimeMillis() - startTime;
 		int tS =((int)timeSpent);
 		this.stats.setOptimizationTime(tS==0?1:tS); //TODO à changer
-		
+
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Formattage des résultats : "+((System.currentTimeMillis()-formattageResultatStart))+"ms]");
@@ -815,16 +815,16 @@ public class Solveur {
 				}
 				CSVResults=CSVResults.substring(0,CSVResults.length()-1);
 				CSVResults+="\n";
-				
+
 			}
 		}
 		if(tS<1) {
 			tS=1;
 		}
 		traiterOptions(req, String.valueOf(queryResult.size()-1),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
-		
+
 	}
-	
+
 	public void solveOptim2(String req) throws MalformedQueryException {
 
 		//TODO: merge join
@@ -865,7 +865,7 @@ public class Solveur {
 
 			resultsPerPattern.put(spCurrent,getResult2(spCurrent, resultsPerVariable));
 		}
-		
+
 
 		if(this.options.getDiagnostic()) {
 			this.options.diagnostic("[Calcul tuples candidats de chaque pattern : "+((System.nanoTime()-resultatsPartielsStart)/1000000)+"ms]");
@@ -1005,9 +1005,9 @@ public class Solveur {
 			tS=1;
 		}
 		traiterOptions(req, String.valueOf(queryResult.size()),"selectivity", selectivityTxt, CSVResults, String.valueOf(tS));
-		
+
 	}
-	
+
 	//Avoir la meme taille pour les AL dans results
 	public HashMap<String, ArrayList<Integer>> getResult(StatementPattern sp, HashMap<String, ArrayList<Integer>> memory) throws MalformedQueryException {
 		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
@@ -1033,7 +1033,7 @@ public class Solveur {
 		if(constantes.size() == 2) { // deux constantes dans le pattern
 			int c1 = this.dictionnaire.getValue(constantes.get(0));
 			int c2 = this.dictionnaire.getValue(constantes.get(1));
-			
+
 			if(index.getIndex().get(c1).containsKey(c2)) {
 				if(!memory.containsKey(variables.get(0))) {
 					memory.put(variables.get(0), new ArrayList<>());
@@ -1100,7 +1100,7 @@ public class Solveur {
 		}
 		return res;
 	}
-	
+
 	public HashMap<String, ArrayList<Integer>> getResult2(StatementPattern sp, HashMap<String, ArrayList<Integer>> memory) throws MalformedQueryException {
 		HashMap<String, ArrayList<Integer>> res = new HashMap<>();
 		ArrayList<String> allVariable = new ArrayList<>();
@@ -1214,7 +1214,7 @@ public class Solveur {
 		HashMap<StatementPattern, HashMap<String,ArrayList<Integer>>> resultsPerPattern = new HashMap<>();
 
 		this.options.diagnostic("-- Lecture de chaque pattern"+"\n");
-		
+
 		//on prend la première variable commune à tous les patterns
 		String variableJointure = starVariables.get(0);
 		ArrayList<Integer> valeursPossiblesVJ = new ArrayList<>();
@@ -1239,17 +1239,17 @@ public class Solveur {
 				}
 				resultsPerPattern.get(sp).put(v,new ArrayList<>());
 			}
-			
+
 			if(constantes.size() == 2) { // deux constantes dans le pattern
 				int c1 = this.dictionnaire.getValue(constantes.get(0));
 				int c2 = this.dictionnaire.getValue(constantes.get(1));
-				
+
 				if(index.getIndex().get(c1).containsKey(c2)) {
 					ArrayList<Integer> results = new ArrayList<>();
 					for(Integer r : index.getIndex().get(c1).get(c2)) {
 						if(first_pattern || valeursPossiblesVJ.contains(r)) {
 							results.add(r);
-							
+
 							if(first_pattern)
 								valeursPossiblesVJ.add(r);
 						}
@@ -1257,30 +1257,30 @@ public class Solveur {
 					valeursPossiblesVJ.retainAll(results);
 					resultsPerPattern.get(sp).put(variables.get(0),results);
 				}
-				
+
 			}
 			else if(constantes.size() == 1) { // une constante dans le pattern
 				// j'ai pso
 				int c1 = this.dictionnaire.getValue(constantes.get(0));
-				
+
 				//la jointure se fait sur s ou o
-				Boolean s = variableJointure.equals(variables.get(0)); 
+				Boolean s = variableJointure.equals(variables.get(0));
 				Boolean o = !s;
-				
+
 				ArrayList<Integer> results = new ArrayList<>();
 				if(s) {
 					for(Integer subject : index.getIndex().get(c1).keySet()) {
-							if(first_pattern || valeursPossiblesVJ.contains(subject)) {
-								for(Integer object : index.getIndex().get(c1).get(subject)) {
-									results.add(subject);
-									resultsPerPattern.get(sp).get(variables.get(0)).add(subject);
-									resultsPerPattern.get(sp).get(variables.get(1)).add(object);
-									
-									if(first_pattern) {
-										valeursPossiblesVJ.add(subject);
-									}
+						if(first_pattern || valeursPossiblesVJ.contains(subject)) {
+							for(Integer object : index.getIndex().get(c1).get(subject)) {
+								results.add(subject);
+								resultsPerPattern.get(sp).get(variables.get(0)).add(subject);
+								resultsPerPattern.get(sp).get(variables.get(1)).add(object);
+
+								if(first_pattern) {
+									valeursPossiblesVJ.add(subject);
 								}
 							}
+						}
 					}
 				}else { //o forcément vrai
 					for(Integer subject : index.getIndex().get(c1).keySet()) {
@@ -1289,7 +1289,7 @@ public class Solveur {
 								results.add(object);
 								resultsPerPattern.get(sp).get(variables.get(0)).add(subject);
 								resultsPerPattern.get(sp).get(variables.get(1)).add(object);
-								
+
 								if(first_pattern) {
 									valeursPossiblesVJ.add(object);
 								}
@@ -1299,10 +1299,10 @@ public class Solveur {
 
 					}
 				}
-				
+
 				//intersection
 				valeursPossiblesVJ.retainAll(results);
-				
+
 			}
 			else {
 				//Cas où il y a 3 variables
@@ -1560,41 +1560,82 @@ public class Solveur {
 	}
 
 	public boolean jenaComparison(String req, String ourResultCSV){
-		//TODO ATTENTION AUX "EXCES"
-		//System.out.println(ourResultCSV);
-		System.out.println(jenaSolve(req));
-		System.out.println("--------");
-		System.out.println(ourResultCSV);
 
 		ArrayList<String> jena = new ArrayList<>(Arrays.asList(jenaSolve(req).split("\n")));
 		ArrayList<String> ourResult = new ArrayList<>(Arrays.asList(ourResultCSV.split("\n")));
-		System.out.println(jena.get(0));
-		System.out.println(ourResult.get(0));
+
+		//System.out.println(ourResultCSV);
+		//System.out.println(jenaSolve(req));
+		//System.out.println("--------");
+		//System.out.println(ourResultCSV);
+
+		if(this.options.getCheckJena()){
+			System.out.println("- JENA "+req);
+			System.out.println(jena.get(0));
+			System.out.println(ourResult.get(0));
+		}
+
+		Boolean reordered=false;
+		HashMap<Integer, Integer> getOrder = new HashMap<>();
+		int jL= jena.get(0).length()-1;
+		Integer tailleMax=Integer.parseInt(jena.get(0).substring(jL-1,jL))+1;
+		//S'ils n'ont pas le meme nombre
+		if(!jena.get(0).substring(0,jL).equals(ourResult.get(0))) {
+			reordered=true;
+			//Cela permet de faire correspondre les ordres
+			List<String> oR = Arrays.asList(ourResult.get(0).split(","));
+			for (Integer i = 0; i < tailleMax; i++) {
+				if(oR.size()>i) {
+					//System.out.println("i:" + i);
+					String o = oR.get(i).substring(1, 2);
+					getOrder.put(Integer.parseInt(o), i);
+					//System.out.println(o + " " + getOrder.get(Integer.parseInt(o)));
+				}
+			}
+		}
 		jena.remove(0);
 		ourResult.remove(0);
 
-		System.out.println();
-
-		System.out.println("Tailles JO: "+jena.size()+"--"+ourResult.size());
 		//s'il est complet
 		if(jena.size() == ourResult.size()) {
 			// on teste la corection
-			//TODO: ordre
-			for (String j : ourResult) {
-				//TODO: vérifier l'intérieur
-				j=j.substring(0,j.length());
-				if (!jena.contains(j)) {
-					System.out.println("JenaFalse: "+j);
+			for (String res : ourResult) {
+				res=res.substring(0,res.length()-1);
+				if(reordered) {
+					res = reorder(res,tailleMax, getOrder);
+				}
+
+				if (!jena.contains(res)) {
+					if(this.options.getCheckJena()){
+						System.out.println("  Pas correct");
+						System.out.println(res);
+					}
 					return false;
 					//pas correct
 				}
-				System.out.println("ok");
 			}
+			//if(this.options.getCheckJena()){
+			//	System.out.println("  Correct et complet");
+			//}
 			return true;
 		}
 		else {
+			if(this.options.getCheckJena()){
+				System.out.println("  Pas complet");
+			}
 			return false;
 		}
+	}
+
+	public String reorder(String s, int tM, HashMap<Integer,Integer>hm){
+		String res="";
+		String[] tab = s.split(",");
+		for(Integer i=0;i<tM;i++){
+			if(hm.keySet().contains(i)) {
+				res += tab[hm.get(i)]+",";
+			}
+		}
+		return res.substring(0,res.length()-1);
 	}
 
 	/**
@@ -1708,13 +1749,13 @@ public class Solveur {
 		String i1 = indexType.substring(0,1);
 
 		String i2 = indexType.substring(1,2);
-		
+
 		double totalValuesNumber = this.indexes.get("spo").getValuesNumber().doubleValue();
 
 		if (constantes.size() == 2) {
 			int c1 = returnConvertCst(i1,s,p,o);
 			int c2 = returnConvertCst(i2,s,p,o);
-			
+
 			if(this.indexes.get(indexType).getIndex2().get(c1).keySet().contains(c2))
 				selectivity = this.indexes.get(indexType).getIndex2().get(c1).get(c2).doubleValue()/totalValuesNumber;
 		}
@@ -1788,11 +1829,11 @@ public class Solveur {
 				e.printStackTrace();
 			}
 		}
-		
+
 		if(this.options.getExport_query_stats()) {
 			writeQueryStat(req, tS, nbRep, evalOrder,selectivity,jenaString);//TODO
 		}
-		 
+
 	}
 
 

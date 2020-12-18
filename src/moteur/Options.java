@@ -17,6 +17,7 @@ public class Options {
 	Boolean star_queries;
 	Boolean diagnostic;
 	Boolean workload_time;
+	Boolean checkJena;
 
 	public String getQueriesPath() {
 		return queriesPath;
@@ -73,6 +74,10 @@ public class Options {
 		return this.workload_time;
 	}
 
+	public Boolean getCheckJena(){
+		return this.checkJena;
+	}
+
 
 	public void setQueriesPath(String queriesPath) {
 		this.queriesPath = queriesPath;
@@ -103,6 +108,13 @@ public class Options {
 
 	public void setJena(Boolean jena) {
 		this.jena = jena;
+	}
+
+	public void setCheckJena(Boolean checkJena) {
+		this.checkJena = checkJena;
+		if(checkJena){
+			this.setJena(true);
+		}
 	}
 
 	public void setShuffle(Boolean jena) {
@@ -150,6 +162,7 @@ public class Options {
 		this.star_queries=false;
 		this.diagnostic=false;
 		this.workload_time=false;
+		this.checkJena=false;
 
 		String line = "";
 		for(String arg : args) {
@@ -198,6 +211,9 @@ public class Options {
 			}
 			if(opt.startsWith("workload_time")){
 				this.setWorkload_time(true);
+			}
+			if(opt.startsWith("checkJena")){
+				this.setCheckJena(true);
 			}
 		}
 	}
