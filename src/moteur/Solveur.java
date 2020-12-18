@@ -78,9 +78,7 @@ public class Solveur {
 		this.indexMap.put("","spo"); //cas où pattern = ?x ?p ?y
 		this.indexMap.put("0","spo");
 		this.indexMap.put("1","pso");
-		this.indexMap.put("2","osp");
 		this.indexMap.put("01","spo");
-		this.indexMap.put("02","sop");
 		this.indexMap.put("12","pos");
 	}
 

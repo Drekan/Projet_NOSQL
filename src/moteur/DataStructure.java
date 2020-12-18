@@ -62,10 +62,8 @@ public class DataStructure {
 		long startTime_i = System.currentTimeMillis();
 
 		this.indexes.put("spo",new Index("spo"));
-		this.indexes.put("sop",new Index("sop"));
 		this.indexes.put("pos",new Index("pos"));
 		this.indexes.put("pso",new Index("pso"));
-		this.indexes.put("osp",new Index("osp"));
 		this.indexes.put("ops",new Index("ops"));
 
 		ArrayList<String[]> tuples = this.dico.getTuples();

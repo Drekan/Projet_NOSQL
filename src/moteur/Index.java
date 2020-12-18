@@ -11,12 +11,12 @@ public class Index {
 	//TODO statistiques
 
 	/**
-	 * Type de l'index : spo, sop, pso, pos, osp, ops, sp, so, os, op, po, ps, o, p, s
+	 * Type de l'index : spo, pso, pos, ops, sp, so, os, op, po, ps, o, p, s
 	 */
 	private String type;
 
 	/**
-	 * Index (po, sop, pso, pos, osp, ops)
+	 * Index (po, pso, pos, ops)
 	 */
 	private Map<Integer, Map<Integer, ArrayList<Integer>>> index;
 	private Integer[][] indexForMergeJoin;
@@ -90,20 +90,12 @@ public class Index {
 			addRec(s,p,o);
 			break;
 
-		case "sop":
-			addRec(s,o,p);
-			break;
-
 		case "pso":
 			addRec(p,s,o);
 			break;
 
 		case "pos":
 			addRec(p,o,s);
-			break;
-
-		case "osp":
-			addRec(o,s,p);
 			break;
 
 		case "ops":
