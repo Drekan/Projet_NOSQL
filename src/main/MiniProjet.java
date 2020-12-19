@@ -32,11 +32,13 @@ public class MiniProjet {
 		//options.setJena(true);
 		options.setCheckJena(true);
 		options.setOptim_none(false);
-		//options.setDiagnostic(true);
+		options.setDiagnostic(false);
 		options.setDataPath("datasets/500K.rdfxml");
 		options.setQueriesPath("star_queries_final.txt");
-		options.setQueriesPath("general_queries_final.txt");
-
+		//options.setQueriesPath("general_queries_final.txt");
+		//options.setQueriesPath("querie.txt");
+		options.setStar_queries(true);
+		
 		Statistics statistiques = new Statistics(options);
 
 		//II. Définition des DataStructure

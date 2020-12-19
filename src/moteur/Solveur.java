@@ -136,7 +136,7 @@ public class Solveur {
 					this.options.diagnostic("Opération de suppression echouée");
 				}
 			}
-			*/
+			 */
 		}
 		catch (Exception e){
 			//?
@@ -467,8 +467,8 @@ public class Solveur {
 				if(constantes.size() == 2) { // deux constantes dans le pattern
 					int c1 = this.dictionnaire.getValue(constantes.get(0));
 					int c2 = this.dictionnaire.getValue(constantes.get(1));
-
-					allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
+					if(index.getIndex().get(c1).get(c2) != null)
+						allResults.get(sp).put(variables.get(0),index.getIndex().get(c1).get(c2));
 				}
 				else if(constantes.size() == 1) { // une constante dans le pattern
 					int c1 = this.dictionnaire.getValue(constantes.get(0));
@@ -515,9 +515,11 @@ public class Solveur {
 					}
 					idx_second++;
 				}
-
 				toMerge.add(this.mergeGeneral(first, second, commonVariable));
 			}
+
+
+
 
 			//on reformate en matrice de String
 			ArrayList<ArrayList<String>> results = new ArrayList<>();
@@ -541,16 +543,15 @@ public class Solveur {
 
 			globalResult.add(results);
 		}
-
-
+		
 		//Faire un produit cartésien de chaque table : c'est les résultats
 
-		while(globalResult.size()>1) {
+		/*while(globalResult.size()>1) {
 			ArrayList<ArrayList<String>> left = globalResult.remove(0);
 			ArrayList<ArrayList<String>> right = globalResult.remove(0);
 
 			globalResult.add(produitCartesien(left,right));
-		}
+		}*/
 
 		ArrayList<ArrayList<String>> queryResult = globalResult.get(0);
 
@@ -582,7 +583,7 @@ public class Solveur {
 		for (ArrayList<String> ligne : queryResult) {
 			for(int i = 0 ; i<ligne.size();i++) {
 				if(indicesVariablesProjetees.contains(i)) {
-					CSVResults += (ligne.get(i) + ", ");
+					CSVResults += (ligne.get(i) + ",");
 				}
 			}
 			CSVResults=CSVResults.substring(0,CSVResults.length()-1);
@@ -1520,7 +1521,7 @@ public class Solveur {
 		//TODO considérer uniquement les variables que l'on doit projeter
 		ArrayList<String> varLeft = new ArrayList<>();
 		ArrayList<String> varRight = new ArrayList<>();
-
+		
 		int l_size = left.get(variableJointure).size();
 		int r_size = right.get(variableJointure).size();
 
@@ -1584,10 +1585,8 @@ public class Solveur {
 			List<String> oR = Arrays.asList(ourResult.get(0).split(","));
 			for (Integer i = 0; i < tailleMax; i++) {
 				if(oR.size()>i) {
-					//System.out.println("i:" + i);
 					String o = oR.get(i).substring(1, 2);
 					getOrder.put(Integer.parseInt(o), i);
-					//System.out.println(o + " " + getOrder.get(Integer.parseInt(o)));
 				}
 			}
 		}
@@ -1602,10 +1601,10 @@ public class Solveur {
 				if(reordered) {
 					res = reorder(res,tailleMax, getOrder);
 				}
-				
+
 				jena.replaceAll( e -> e.replaceAll("\n", ""));
 				jena.replaceAll( e -> e.replaceAll("\r", ""));
-				
+
 				if (!jena.contains(res.replaceAll("\n", "").replace("\r", ""))) {
 					if(this.options.getCheckJena()){
 						System.out.println("  Pas correct");
