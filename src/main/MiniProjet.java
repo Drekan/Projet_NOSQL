@@ -30,14 +30,16 @@ public class MiniProjet {
 		//options.setExport_query_results(true);
 		//options.setExport_query_stats(true);
 		//options.setJena(true);
+		/*
 		options.setCheckJena(true);
 		options.setOptim_none(false);
 		options.setDiagnostic(false);
 		options.setDataPath("datasets/500K.rdfxml");
 		options.setQueriesPath("star_queries_final.txt");
+		*/
 		//options.setQueriesPath("general_queries_final.txt");
-		//options.setQueriesPath("querie.txt");
-		options.setStar_queries(true);
+		//options.setQueriesPath("query.txt");
+		//options.setStar_queries(true);
 		
 		Statistics statistiques = new Statistics(options);
 
