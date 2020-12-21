@@ -1368,6 +1368,7 @@ public class Solveur {
 			while(generated.contains(c)){
 				c = r.nextInt(queries.size());
 			}
+<<<<<<< HEAD
 			generated.add(c);
 			starVariables = getStarVariables(queries.get(c));
 			//TODO: à facto ?
@@ -1385,6 +1386,27 @@ public class Solveur {
 					solveStarQuery(queries.get(c), starVariables, correctComplet);
 				}
 			}
+=======
+			if(isValid(queries.get(c))) {
+				generated.add(c);
+				starVariables = getStarVariables(queries.get(c));
+				//TODO: à facto ?
+				if(starVariables.size()==0) {
+					if (!optim_none) {
+						this.options.diagnostic("- M2b");
+						solveOptim(queries.get(c),correctComplet);
+					} else {
+						this.options.diagnostic("- M2a");
+						solve(queries.get(c),correctComplet);
+					}
+				}
+				else{
+					this.options.diagnostic("- M1");
+					solveStarQuery(queries.get(c),starVariables,correctComplet);
+				}
+			}
+
+>>>>>>> 7806a04f26a9200059d0cf4167d234dd0cab208e
 		}
 	}
 
