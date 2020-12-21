@@ -241,11 +241,11 @@ public class Solveur {
 			}
 		}
 		 */
-		if(options.getExport_query_stats()){
+		if(options.getExport_query_stats()||options.getWorkload_time()){
 			this.stats.writeStats();
 		}
 
-		if(options.getVerbose() || options.getWorkload_time()) {
+		if(options.getVerbose()){// || options.getWorkload_time()) {
 			System.out.println("\nTemps évaluation du workload : "+ this.stats.getWorkloadEvaluationTime()+"ms");
 		}
 
@@ -828,7 +828,6 @@ public class Solveur {
 					//regarder les valeurs communes entre les 2
 					//retainsall != null []
 
-					System.out.println();
 					//if(memory.get(variables.get(0)).contains(index.getIndex().get(c1).get(c2))) {
 					ArrayList<String> test= new ArrayList(index.getIndex().get(c1).get(c2));
 					//if(index.getIndex().get(c1).get(c2).retainAll(memory.get(variables.get(0))) ){
@@ -1372,18 +1371,19 @@ public class Solveur {
 			generated.add(c);
 			starVariables = getStarVariables(queries.get(c));
 			//TODO: à facto ?
-			if(starVariables.size()==0) {
-				if (!optim_none) {
-					this.options.diagnostic("- M2b");
-					solveOptim(queries.get(c),correctComplet);
+			if(isValid(queries.get(c))) {
+				if (starVariables.size() == 0) {
+					if (!optim_none) {
+						this.options.diagnostic("- M2b");
+						solveOptim(queries.get(c), correctComplet);
+					} else {
+						this.options.diagnostic("- M2a");
+						solve(queries.get(c), correctComplet);
+					}
 				} else {
-					this.options.diagnostic("- M2a");
-					solve(queries.get(c),correctComplet);
+					this.options.diagnostic("- M1");
+					solveStarQuery(queries.get(c), starVariables, correctComplet);
 				}
-			}
-			else{
-				this.options.diagnostic("- M1");
-				solveStarQuery(queries.get(c),starVariables,correctComplet);
 			}
 		}
 	}
